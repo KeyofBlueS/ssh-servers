@@ -32,7 +32,7 @@ $ chmod +x "$HOME/ssh-servers/mario-rossi-ssh-server.sh"
 soltanto una volta per ogni script di configurazione creato.
 
 ### UTILIZZO
-Una volta creato correttamente uno o più script di configurazione, basta avviarli su un terminale.
+Una volta creati correttamente uno o più script di configurazione, basta avviarli su un terminale.
 Ad esempio se vogliamo collegarci tramite lo script di configurazione "mario-rossi-ssh-server.sh, su un terminale digitare:
 ```sh
 $ "$HOME/ssh-servers/mario-rossi-ssh-server.sh"
