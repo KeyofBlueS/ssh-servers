@@ -401,7 +401,7 @@ echo -e "\e[1;31m## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m
 esac
 }
 
-manual(){
+givemehelp(){
 echo "
 ### DESCRIZIONE
 Lo script bash ssh-servers facilita la connessione ad uno o più server ssh remoti, automatizzando la connessione tramite
@@ -463,9 +463,7 @@ then
    menu
 elif [ "$1" = "--help" ]
 then
-   STATUS="exit 0"
-   manual
+   givemehelp
 else
-   STATUS=menu0
-   manual
+   menu
 fi
