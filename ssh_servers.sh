@@ -403,6 +403,13 @@ esac
 
 givemehelp(){
 echo "
+# ssh-servers
+
+# Version:    1.0.0
+# Author:     KeyofBlueS
+# Repository: https://github.com/KeyofBlueS/ssh-servers
+# License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
+
 ### DESCRIZIONE
 Lo script bash ssh-servers facilita la connessione ad uno o più server ssh remoti, automatizzando la connessione tramite
 file di configurazione personalizzati e grazie a menu interattivi.
