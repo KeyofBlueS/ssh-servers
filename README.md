@@ -41,12 +41,12 @@ $ "$HOME/ssh-servers/mario-rossi-ssh-server.sh"
 A questo punto seguire le istruzioni su schermo.
 
 Una volta che il server è stato rilevato, è possibile avviare diversi tipi di connessione:
-Socks - Crea un socks server per condividere
-	      la connessione del server sul client
+```
+Socks - Crea un socks server per condividere la connessione del server sul client
 Monta localmente il server tramite SSHFS
 GUI - Con supporto alla GUI sul Client
 CLI - Con il solo supporto alla CLI
-
+```
 È possibile utilizzare le seguenti opzioni:
 ```sh
 --local	      Avvia una connessione ssh verso un server in ascolto all'interno della rete LAN
