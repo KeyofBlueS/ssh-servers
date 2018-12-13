@@ -19,6 +19,8 @@ export SERVEMAC="AB:01:CD:23:EF:45 GH:67:IJ:89:KL:10"
 ############################## Impostazioni per il collegamento ssh in locale ##############################
 # Indirizzo/indirizzi IP (separati da uno spazio) nella rete locale del server - si consiglia di impostare un indirizzo statico sul server
 export SERVERIP_LAN="000.000.000.000"
+# Secondi di attesa prima di provare a ricontattare il server nella rete locale nel caso questo sia irraggiungibile (inserire un valore da 0 a 10)
+export LAN_COUNTDOWN=5
 
 ############################## Impostazioni per il collegamento ssh in remoto ##############################
 # URL del file contenente gli indirizzi ip del server remoto (opzionale)
@@ -35,6 +37,8 @@ export CURRENTIP_FILE=user@server_hostname_current.txt
 # Indirizzo preferito (quello più affidabile) per la connessione in remoto (SERVERIP_INTERNET_1 2 3 o 4) o un IP pubblico statico
 export SERVERIP_INTERNET=`cat $CURRENTIP_PATH$CURRENTIP_FILE | grep SERVERIP_INTERNET_2 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
 #export SERVERIP_INTERNET=000.000.000.000
+# Secondi di attesa prima di provare a ricontattare il server remoto nel caso questo sia irraggiungibile (inserire un valore da 0 a 10
+export INTERNET_COUNTDOWN=10
 
 ############################## Impostazioni per il tipo di collegamento preferito ##############################
 # Tipo di collegamento (meramente informativo, non necessario, inserire qualsiasi valore desiderato) es. LOCALE o REMOTO
