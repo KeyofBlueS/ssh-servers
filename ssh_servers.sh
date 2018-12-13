@@ -47,20 +47,23 @@ else
     echo
 fi
 
-# BEEP
+if echo $AUDIO | grep -qx "BEEP"; then
 BELL1=( "beep" )
 BELL2=( "beep -f 1000 -n -f 2000 -n -f 1500" )
 BELL3=( "beep -f 2000" )
-# SOX
-#GAIN="-50"
-#BEEP1=( "play -q -n synth 0.2 square 1000 gain $GAIN fade h 0.01" )
-#BEEP2=( "play -q -n synth 0.2 square 1000 gain $GAIN : synth 0.2 square 2000 gain $GAIN fade h 0.01 : synth 0.2 square 1500 gain $GAIN fade h 0.01" )
-#BEEP3=( "play -q -n synth 0.2 square 2000 gain $GAIN fade h 0.01" )
-# NULL
-#BEEP0="echo BEEP"
-#BEEP1="echo BEEP"
-#BEEP2="echo BEEP"
-
+elif echo $AUDIO | grep -qx "SOX"; then
+BELL1=( "play -q -n synth 0.2 square 1000 gain $GAIN fade h 0.01" )
+BELL2=( "play -q -n synth 0.2 square 1000 gain $GAIN : synth 0.2 square 2000 gain $GAIN fade h 0.01 : synth 0.2 square 1500 gain $GAIN fade h 0.01" )
+BELL3=( "play -q -n synth 0.2 square 2000 gain $GAIN fade h 0.01" )
+elif echo $AUDIO | grep -qx "NULL"; then
+BELL0="echo BEEP"
+BELL1="echo BEEP"
+BELL2="echo BEEP"
+else
+BELL0="echo BEEP"
+BELL1="echo BEEP"
+BELL2="echo BEEP"
+fi
 
 menu0(){
 $BELL2
