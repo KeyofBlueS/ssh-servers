@@ -17,9 +17,9 @@ done
 
 for name in beep sox
 do
-  [[ $(which $name 2>/dev/null) ]] || { echo -en "\n$name è consigliato da questo script. Utilizza 'sudo apt-get install $name'";deps=1; }
+  [[ $(which $name 2>/dev/null) ]] || { echo -en "\n$name è consigliato da questo script per poter utilizzare le segnalazioni acustiche. Utilizza 'sudo apt-get install $name'";deps=1; }
 done
-[[ $deps -ne 1 ]] && echo "" || { echo -en "\nInstalla le dipendenze consigliate e riavvia questo script\n";}
+[[ $deps -ne 1 ]] && echo "" || { echo -en "\nSe preferisci, installa le dipendenze consigliate e riavvia questo script\n";}
 
 #KEYFILE=/PATH/TO/KEYFILE
 #SSHPORT=22
