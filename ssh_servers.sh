@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version:    1.0.0
+# Version:    1.5.0
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -34,7 +34,11 @@ done
 #REMOTEMOUNTPOINT=/
 LOCALUSER=$USER
 LOCALMOUNTPOINT="/media/"$LOCALUSER"/"$SERVERNAME"_SSHFS"
+
 CURRENTIP=$CURRENTIP_PATH$CURRENTIP_FILE
+
+LANCOUNTSTEP=serverip_lan_error_countdown_$LAN_COUNTDOWN
+INTERNETCOUNTSTEP=serverip_internet_error_countdown_$INTERNET_COUNTDOWN
 
 if [ -e /tmp/$CURRENTIP_FILE.tmp ]
 then
@@ -93,36 +97,101 @@ echo -e "\e[1;31m## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m
 esac
 }
 
-ping_lan(){
-while true
-do
-#SERVERIP=$SERVERIP_LAN
-TYPE=LOCALE
-  echo -e "\e[1;34m
-## PING $SERVERUSERNAME@$SERVERNAME  IP=$SERVERIP Port=$SSHPORT
-\e[0m"
-  $BEEP1
-  fping -r0 $SERVERIP_LAN | grep "alive"
-  if [ $? = 0 ]; then
-	SERVERIP=`fping -q -r0 -a $SERVERIP_LAN`
-	echo -e "\e[1;34m
-	$SERVERUSERNAME@$SERVERNAME @ $SERVERIP è\e[0m" "\e[1;32mONLINE\e[0m"
-	break
-  fi
+serverip_lan_error_countdown_10(){
+LANCOUNT=10
+LANCOUNTSTEP=serverip_lan_error_countdown_9
+serverip_lan_error
+}
 
-		echo -e "\e[1;34m
-	$SERVERUSERNAME@$SERVERNAME @ $SERVERIP_LAN non raggiungibile, è\e[0m" "\e[1;31mOFFLINE o rete non disponibile\e[0m"
+serverip_lan_error_countdown_9(){
+LANCOUNT=9
+LANCOUNTSTEP=serverip_lan_error_countdown_8
+serverip_lan_error
+}
+
+serverip_lan_error_countdown_8(){
+LANCOUNT=8
+LANCOUNTSTEP=serverip_lan_error_countdown_7
+serverip_lan_error
+}
+
+serverip_lan_error_countdown_7(){
+LANCOUNT=7
+LANCOUNTSTEP=serverip_lan_error_countdown_6
+serverip_lan_error
+}
+
+serverip_lan_error_countdown_6(){
+LANCOUNT=6
+LANCOUNTSTEP=serverip_lan_error_countdown_5
+serverip_lan_error
+}
+
+serverip_lan_error_countdown_5(){
+LANCOUNT=5
+LANCOUNTSTEP=serverip_lan_error_countdown_4
+serverip_lan_error
+}
+
+serverip_lan_error_countdown_4(){
+LANCOUNT=4
+LANCOUNTSTEP=serverip_lan_error_countdown_3
+serverip_lan_error
+}
+
+serverip_lan_error_countdown_3(){
+LANCOUNT=3
+LANCOUNTSTEP=serverip_lan_error_countdown_2
+serverip_lan_error
+}
+
+serverip_lan_error_countdown_2(){
+LANCOUNT=2
+LANCOUNTSTEP=serverip_lan_error_countdown_1
+serverip_lan_error
+}
+
+serverip_lan_error_countdown_1(){
+LANCOUNT=1
+LANCOUNTSTEP=serverip_lan_error_countdown_0
+serverip_lan_error
+}
+
+serverip_lan_error_countdown_0(){
+LANCOUNT=0
+LANCOUNTSTEP=serverip_lan_error_countdown_end
+serverip_lan_error
+}
+
+serverip_lan_error_countdown_end(){
+LANCOUNT=$LAN_COUNTDOWN
+LANCOUNTSTEP=serverip_lan_error_countdown_$LAN_COUNTDOWN
+ping_lan
+}
+
+serverip_lan_error(){
+clear
+echo -e "\e[1;34m
+$SERVERUSERNAME@$SERVERNAME @ $SERVERIP_LAN non raggiungibile, è\e[0m" "\e[1;31mOFFLINE o rete non disponibile\e[0m"
 #	echo -e "\e[1;31mProvo a risvegliare il device...\e[0m"
 #	wakeonlan -i "$SERVERIP" $SERVERMAC
 echo -e "\e[1;31mPremi:
 M per inserire manualmente l'indirizzo IP del server
-R o attendi 1 secondo per riprovare
+R o attendi $LANCOUNT secondo per riprovare
 E per uscire\e[0m"
 read -t 1 -n 1 -p "Scelta (M/R/E): " testo
 case $testo in
     M|m)
 	{
 	serverip_manual
+	}
+    ;;
+    R|r)
+	{
+	echo -e "\e[1;34m
+	Riprovo...
+	\e[0m"
+	$LANCOUNTSTEP
 	}
     ;;
     E|e)
@@ -137,16 +206,40 @@ case $testo in
 			exit 0
 	}
     ;;
-    R|r|"")
+    "")
 	{
-	ping_lan
+	echo "Tempo scaduto"
+	echo -e "\e[1;34m	Riprovo...
+	\e[0m"
+	clear
+	$LANCOUNTSTEP
+#	serverip_internet_static
 	}
     ;;
     *)
-echo -e "\e[1;31m## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m"
-ping_lan
+echo -e "\e[1;31m ## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m" && sleep 2
+LANCOUNTSTEP=serverip_lan_error_countdown_$LAN_COUNTDOWN
+serverip_lan_error
     ;;
 esac
+}
+
+ping_lan(){
+while true
+do
+TYPE=LOCALE
+  echo -e "\e[1;34m
+## PING $SERVERUSERNAME@$SERVERNAME  IP=$SERVERIP Port=$SSHPORT
+\e[0m"
+  $BEEP1
+  fping -r0 $SERVERIP_LAN | grep "alive"
+  if [ $? = 0 ]; then
+	SERVERIP=`fping -q -r0 -a $SERVERIP_LAN`
+	echo -e "\e[1;34m
+	$SERVERUSERNAME@$SERVERNAME @ $SERVERIP è\e[0m" "\e[1;32mONLINE\e[0m"
+	break
+  fi
+$LANCOUNTSTEP
 	done
 menu
 }
@@ -180,7 +273,6 @@ serverip_internet_static(){
 echo "Indirizzo IP statico o più affidabile:"
   SERVERIP=$SERVERIP_INTERNET
 SERVERIP_INTERNET_STEP=serverip_internet_1
-#serverip_internet_error
 ping_wan
 }
 
@@ -209,20 +301,94 @@ serverip_internet_4(){
 echo "Indirizzo IP dinamico o memorizzato 4"
   SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_INTERNET_4 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
 SERVERIP_INTERNET_STEP=serverip_internet_error
+
 ping_wan
 }
 
+serverip_internet_error_countdown_10(){
+INTERNETCOUNT=10
+INTERNETCOUNTSTEP=serverip_internet_error_countdown_9
+serverip_internet_error
+}
+
+serverip_internet_error_countdown_9(){
+INTERNETCOUNT=9
+INTERNETCOUNTSTEP=serverip_internet_error_countdown_8
+serverip_internet_error
+}
+
+serverip_internet_error_countdown_8(){
+INTERNETCOUNT=8
+INTERNETCOUNTSTEP=serverip_internet_error_countdown_7
+serverip_internet_error
+}
+
+serverip_internet_error_countdown_7(){
+INTERNETCOUNT=7
+INTERNETCOUNTSTEP=serverip_internet_error_countdown_6
+serverip_internet_error
+}
+
+serverip_internet_error_countdown_6(){
+INTERNETCOUNT=6
+INTERNETCOUNTSTEP=serverip_internet_error_countdown_5
+serverip_internet_error
+}
+
+serverip_internet_error_countdown_5(){
+INTERNETCOUNT=5
+INTERNETCOUNTSTEP=serverip_internet_error_countdown_4
+serverip_internet_error
+}
+
+serverip_internet_error_countdown_4(){
+INTERNETCOUNT=4
+INTERNETCOUNTSTEP=serverip_internet_error_countdown_3
+serverip_internet_error
+}
+
+serverip_internet_error_countdown_3(){
+INTERNETCOUNT=3
+INTERNETCOUNTSTEP=serverip_internet_error_countdown_2
+serverip_internet_error
+}
+
+serverip_internet_error_countdown_2(){
+INTERNETCOUNT=2
+INTERNETCOUNTSTEP=serverip_internet_error_countdown_1
+serverip_internet_error
+}
+
+serverip_internet_error_countdown_1(){
+INTERNETCOUNT=1
+INTERNETCOUNTSTEP=serverip_internet_error_countdown_0
+serverip_internet_error
+}
+
+serverip_internet_error_countdown_0(){
+INTERNETCOUNT=0
+INTERNETCOUNTSTEP=serverip_internet_error_countdown_end
+serverip_internet_error
+}
+
+serverip_internet_error_countdown_end(){
+INTERNETCOUNT=$INTERNET_COUNTDOWN
+INTERNETCOUNTSTEP=serverip_internet_error_countdown_$INTERNET_COUNTDOWN
+serverip_internet_static
+}
+
 serverip_internet_error(){
-		echo -e "\e[1;34m
-	$SERVERUSERNAME@$SERVERNAME non raggiungibile, è\e[0m" "\e[1;31mOFFLINE o rete non disponibile\e[0m"
+clear
+echo -e "\e[1;34m
+$SERVERUSERNAME@$SERVERNAME non raggiungibile, è\e[0m" "\e[1;31mOFFLINE o rete non disponibile\e[0m"
 #	echo -e "\e[1;31mProvo a risvegliare il device...\e[0m"
 #	wakeonlan -i "$SERVERIP" $SERVERMAC
 echo -e "\e[1;31mPremi:
 A per provare ad aggiornare gli indirizzi IP
 M per inserire manualmente l'indirizzo IP del server
-R o attendi 10 secondi per riprovare
+R o attendi $INTERNETCOUNT secondi per riprovare
 E per uscire\e[0m"
-read -t 10 -n 1 -p "Scelta (A/M/R/E): " testo
+read -t 1 -n 1 -p "Scelta (A/M/R/E): " testo
 case $testo in
     A|a)
 	{
@@ -232,6 +398,14 @@ case $testo in
     M|m)
 	{
 	serverip_manual
+	}
+    ;;
+    R|r)
+	{
+	echo -e "\e[1;34m
+	Riprovo...
+	\e[0m"
+	$INTERNETCOUNTSTEP
 	}
     ;;
     E|e)
@@ -246,24 +420,20 @@ case $testo in
 			exit 0
 	}
     ;;
-    R|r)
-	{
-	echo -e "\e[1;34m
-	Riprovo...
-	\e[0m"
-	serverip_internet_static
-	}
-    ;;
     "")
 	{
 	echo "Tempo scaduto"
 	echo -e "\e[1;34m	Riprovo...
 	\e[0m"
-	serverip_internet_static
+	clear
+	$INTERNETCOUNTSTEP
+#	serverip_internet_static
 	}
     ;;
     *)
-echo -e "\e[1;31m## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m"
+echo -e "\e[1;31m ## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m" && sleep 2
+INTERNETCOUNTSTEP=serverip_internet_error_countdown_$INTERNET_COUNTDOWN
+#ping_wan
 serverip_internet_error
     ;;
 esac
@@ -309,6 +479,7 @@ menu
 }
 
 menu(){
+clear
 $BEEP2
 echo -e "\e[1;34m
 ## L'indirizzo remoto è $SERVERIP ($TYPE)
@@ -405,13 +576,6 @@ esac
 
 givemehelp(){
 echo "
-# ssh-servers
-
-# Version:    1.0.0
-# Author:     KeyofBlueS
-# Repository: https://github.com/KeyofBlueS/ssh-servers
-# License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
-
 ### DESCRIZIONE
 Lo script bash ssh-servers facilita la connessione ad uno o più server ssh remoti, automatizzando la connessione tramite
 file di configurazione personalizzati e grazie a menu interattivi.
@@ -472,7 +636,9 @@ then
    menu
 elif [ "$1" = "--help" ]
 then
+   STATUS="exit 0"
    givemehelp
 else
+   STATUS=menu0
    menu
 fi
