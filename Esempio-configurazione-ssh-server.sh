@@ -48,6 +48,15 @@ export TYPE=REMOTO
 #export SERVERIP=$SERVERIP_LAN
 export SERVERIP=$SERVERIP_INTERNET
 
+############################# Impostazioni per il tipo segnale acustico #############################
+# Tipo di segnale acustico da utilizzare (BEEP, SOX, NULL)
+# BEEP  Imposta il segnale acustico tramite lo speaker interno (richiede beep)
+# SOX   Imposta il segnale acustico tramite la scheda audio (richiede sox)
+# NULL  Disattiva il segnale acustico
+export AUDIO=BEEP
+# Regola il volume delle segnalazioni acustiche per SOX
+GAIN="-50"
+
 ############################## Avvio collegamento ##############################
 # Percorso dello script per il collegamento (es. /opt/ssh-servers/ssh_servers.sh $@)
 ssh-servers $@
