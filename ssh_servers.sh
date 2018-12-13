@@ -657,6 +657,10 @@ elif [ "$1" = "--help" ]
 then
    STATUS="exit 0"
    givemehelp
+elif [ "$1" = "" ]
+then
+   STATUS="exit 0"
+   givemehelp
 else
    STATUS=menu0
    menu
