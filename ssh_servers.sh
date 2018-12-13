@@ -48,17 +48,22 @@ else
 fi
 
 # BEEP
-BEEP1=( "beep" )
-BEEP2=( "beep -f 1000 -n -f 2000 -n -f 1500" )
-BEEP3=( "beep -f 2000" )
+BELL1=( "beep" )
+BELL2=( "beep -f 1000 -n -f 2000 -n -f 1500" )
+BELL3=( "beep -f 2000" )
 # SOX
 #GAIN="-50"
 #BEEP1=( "play -q -n synth 0.2 square 1000 gain $GAIN fade h 0.01" )
 #BEEP2=( "play -q -n synth 0.2 square 1000 gain $GAIN : synth 0.2 square 2000 gain $GAIN fade h 0.01 : synth 0.2 square 1500 gain $GAIN fade h 0.01" )
 #BEEP3=( "play -q -n synth 0.2 square 2000 gain $GAIN fade h 0.01" )
+# NULL
+#BEEP0="echo BEEP"
+#BEEP1="echo BEEP"
+#BEEP2="echo BEEP"
+
 
 menu0(){
-$BEEP2
+$BELL2
 echo -e "\e[1;34m
 ## $SERVERUSERNAME@$SERVERNAME IP=$SERVERIP Port=$SSHPORT\e[0m"
 echo -e "\e[1;31m
@@ -191,7 +196,9 @@ case $testo in
 	echo -e "\e[1;34m
 	Riprovo...
 	\e[0m"
-	$LANCOUNTSTEP
+	LANCOUNT=$LAN_COUNTDOWN
+	LANCOUNTSTEP=serverip_lan_error_countdown_$LAN_COUNTDOWN
+	ping_lan
 	}
     ;;
     E|e)
@@ -231,7 +238,7 @@ TYPE=LOCALE
   echo -e "\e[1;34m
 ## PING $SERVERUSERNAME@$SERVERNAME  IP=$SERVERIP Port=$SSHPORT
 \e[0m"
-  $BEEP1
+  $BELL1
   fping -r0 $SERVERIP_LAN | grep "alive"
   if [ $? = 0 ]; then
 	SERVERIP=`fping -q -r0 -a $SERVERIP_LAN`
@@ -245,7 +252,7 @@ menu
 }
 
 serverip_manual(){
-$BEEP1
+$BELL1
 echo -e "\e[1;34m
 ## $SERVERUSERNAME@$SERVERNAME\e[0m"
 echo -e "\e[1;31mInserisci manualmente l'indirizzo IP del server\e[0m"
@@ -405,7 +412,9 @@ case $testo in
 	echo -e "\e[1;34m
 	Riprovo...
 	\e[0m"
-	$INTERNETCOUNTSTEP
+	INTERNETCOUNT=$INTERNET_COUNTDOWN
+	INTERNETCOUNTSTEP=serverip_internet_error_countdown_$INTERNET_COUNTDOWN
+	serverip_internet_static
 	}
     ;;
     E|e)
@@ -460,7 +469,7 @@ TYPE=REMOTO
     echo -e "\e[1;34m
 ## NMAP $SERVERUSERNAME@$SERVERNAME  IP=$SERVERIP Port=$SSHPORT
 \e[0m"
-  $BEEP1
+  $BELL1
   nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open"
   if [[ $? = 0 ]]; then
 	echo -e "\e[1;34m
@@ -480,7 +489,7 @@ menu
 
 menu(){
 clear
-$BEEP2
+$BELL2
 echo -e "\e[1;34m
 ## L'indirizzo remoto è $SERVERIP ($TYPE)
 
@@ -505,7 +514,7 @@ do
 ## SSH $SERVERUSERNAME@$SERVERNAME SOCKS
 \e[0m"
 #  sleep 1
-  $BEEP3
+  $BELL3
   ssh -i "$KEYFILE" -ND $SOCKSPORT -p $SSHPORT $SERVERUSERNAME@$SERVERIP
 #	menu0
 	menu
@@ -520,7 +529,7 @@ do
 ## SSH $SERVERUSERNAME@$SERVERNAME SSHFS
 \e[0m"
 #  sleep 1
-  $BEEP3
+  $BELL3
   fusermount -u "$LOCALMOUNTPOINT"
   sudo mkdir "$LOCALMOUNTPOINT"
   sudo chown $LOCALUSER "$LOCALMOUNTPOINT"
@@ -539,7 +548,7 @@ do
 ## SSH $SERVERUSERNAME@$SERVERNAME GUI
 \e[0m"
 #  sleep 1
-  $BEEP3
+  $BELL3
   ssh -i "$KEYFILE" -X -p $SSHPORT $SERVERUSERNAME@$SERVERIP
 #	menu0
 	menu
@@ -554,7 +563,7 @@ do
 ## SSH $SERVERUSERNAME@$SERVERNAME CLI
 \e[0m"
 #  sleep 1
-  $BEEP3
+  $BELL3
   ssh -i "$KEYFILE" -p $SSHPORT $SERVERUSERNAME@$SERVERIP
 #	menu0
 	menu
