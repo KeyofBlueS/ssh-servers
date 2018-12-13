@@ -114,9 +114,10 @@ TYPE=LOCALE
 	$SERVERUSERNAME@$SERVERNAME @ $SERVERIP_LAN non raggiungibile, è\e[0m" "\e[1;31mOFFLINE o rete non disponibile\e[0m"
 #	echo -e "\e[1;31mProvo a risvegliare il device...\e[0m"
 #	wakeonlan -i "$SERVERIP" $SERVERMAC
-echo -e "\e[1;31mPremi 'E' per uscire
+echo -e "\e[1;31mPremi:
 M per inserire manualmente l'indirizzo IP del server
-R o attendi 1 secondo per riprovare\e[0m"
+R o attendi 1 secondo per riprovare
+E per uscire\e[0m"
 read -t 1 -n 1 -p "Scelta (M/R/E): " testo
 case $testo in
     M|m)
@@ -216,10 +217,11 @@ serverip_internet_error(){
 	$SERVERUSERNAME@$SERVERNAME non raggiungibile, è\e[0m" "\e[1;31mOFFLINE o rete non disponibile\e[0m"
 #	echo -e "\e[1;31mProvo a risvegliare il device...\e[0m"
 #	wakeonlan -i "$SERVERIP" $SERVERMAC
-echo -e "\e[1;31mPremi 'E' per uscire
+echo -e "\e[1;31mPremi:
 A per provare ad aggiornare gli indirizzi IP
 M per inserire manualmente l'indirizzo IP del server
-R o attendi 10 secondi per riprovare\e[0m"
+R o attendi 10 secondi per riprovare
+E per uscire\e[0m"
 read -t 10 -n 1 -p "Scelta (A/M/R/E): " testo
 case $testo in
     A|a)
