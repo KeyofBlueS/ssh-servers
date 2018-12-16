@@ -1,13 +1,16 @@
 #!/bin/bash
 
-############################## Impostazioni per il reperimento indirizzi ip ##############################
+############################## Impostazioni per il reperimento informazioni del server ##############################
 ### Vedi [current-ip](https://github.com/KeyofBlueS/current-ip)
-# URL del file contenente gli indirizzi ip del server remoto (opzionale)
+# URL del file contenente le informazioni del server remoto (opzionale)
 export CURRENTIP_LINK=https://www.miositoftp.com/user@server_hostname_current.txt
-# Percorso locale in cui è presente il file contenente gli indirizzi ip del server remoto (opzionale; default "$HOME/")
+# Percorso locale in cui è presente il file contenente le informazioni del server remoto (opzionale)
 export CURRENTIP_PATH="$HOME/"
-# Nome del file contenente gli indirizzi ip del server remoto (opzionale)
-# Se presente dovrà contenere gli indirizzi ip nel seguente formato:
+# Nome del file contenente le informazioni del server remoto (opzionale)
+# Se presente dovrà contenere le informazioni nel seguente formato:
+#SSHPORT=22
+#SERVERUSERNAME=server_username
+#SERVERHOSTNAME=server_hostname
 #SERVERIP_INTERNET_1=000.000.000.000
 #SERVERIP_INTERNET_2=000.000.000.000
 #SERVERIP_INTERNET_3=000.000.000.000
@@ -25,7 +28,7 @@ export SSHPORT=22
 export SOCKSPORT=1080
 # Nome dell'utente presente sul server su cui ci si vuole loggare (non utilizzare "root")
 #export SERVERUSERNAME=`cat "$CURRENTIP_PATH$CURRENTIP_FILE" | grep "export SERVERUSERNAME=" | cut -c23-55`
-export SERVERUSERNAME=user
+export SERVERUSERNAME=server_username
 # $HOSTNAME del server (meramente informativo per una più facile identificazione del server, ma necessario per il montaggio tramite SSHFS)
 export SERVERNAME=server_hostname
 # Punto di mount del server, la cartella radice da cui verrà montato localmente il server tramite SSHFS
