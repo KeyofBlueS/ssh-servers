@@ -604,9 +604,9 @@ CLI - Con il solo supporto alla CLI
 
 --help        Visualizza una descrizione ed opzioni di ssh-servers
 
-### Nota
+### NOTA
 Se i server ssh posseggono un indirizzo ip pubblico dinamico, consiglio fortemente (i due script si integrano a vicenda) di
-utilizzare "'"current-ip"'" https://github.com/KeyofBlueS/current-ip
+utilizzare current-ip (https://github.com/KeyofBlueS/current-ip) sul lato server.
 "
 exit 0
 }
