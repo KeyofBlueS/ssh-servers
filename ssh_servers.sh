@@ -5,9 +5,6 @@
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
 
-# Dependencies:
-# sudo apt get install beep sox fping nmap wakeonlan openssh-client sshfs fusermount
-
 #echo -n "Checking dependencies... "
 for name in fping fusermount nmap ssh sshfs wakeonlan
 do
@@ -23,15 +20,22 @@ done
 
 #KEYFILE=/PATH/TO/KEYFILE
 #SSHPORT=22
-#SERVERUSERNAME=user
-#SERVERIP_LAN=0.0.0.0
-#SERVERIP_INTERNET=0.0.0.0
-#SERVERIP=$SERVERIP_LAN
-#SERVERMAC=
-#TYPE=LOCALE|REMOTO
-#SERVERNAME=HOST
 #SOCKSPORT=1080
+#SERVERUSERNAME=user
+#SERVERNAME=HOST
 #REMOTEMOUNTPOINT=/
+#SERVERMAC=
+#SERVERIP_LAN=0.0.0.0
+#LAN_COUNTDOWN=3
+#CURRENTIP_LINK=
+#CURRENTIP_PATH=
+#CURRENTIP_FILE=
+#SERVERIP_INTERNET=0.0.0.0
+#INTERNET_COUNTDOWN=10
+#TYPE=LOCALE|REMOTO
+#SERVERIP=$SERVERIP_LAN
+#AUDIO=BEEP
+
 LOCALUSER=$USER
 LOCALMOUNTPOINT="/media/"$LOCALUSER"/"$SERVERNAME"_SSHFS"
 
@@ -80,27 +84,27 @@ read -p "Scelta (L/R/E): " testo
 case $testo in
     L|l)
 	{
-  echo -e "\e[1;34m
+	echo -e "\e[1;34m
 ## HAI SCELTO LOCALE\e[0m"
 	ping_lan
 	}
     ;;
     R|r)
 	{
-  echo -e "\e[1;34m
+	echo -e "\e[1;34m
 ## HAI SCELTO REMOTO\e[0m"
 	serverip_internet_static
 	}
     ;;
     E|e)
 	{
-			echo -e "\e[1;34mEsco dal programma\e[0m"
-			exit 0
+	echo -e "\e[1;34mEsco dal programma\e[0m"
+	exit 0
 	}
     ;;
     *)
-echo -e "\e[1;31m## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m"
-    menu0
+	echo -e "\e[1;31m## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m"
+	menu0
     ;;
 esac
 }
@@ -110,67 +114,56 @@ LANCOUNT=10
 LANCOUNTSTEP=serverip_lan_error_countdown_9
 serverip_lan_error
 }
-
 serverip_lan_error_countdown_9(){
 LANCOUNT=9
 LANCOUNTSTEP=serverip_lan_error_countdown_8
 serverip_lan_error
 }
-
 serverip_lan_error_countdown_8(){
 LANCOUNT=8
 LANCOUNTSTEP=serverip_lan_error_countdown_7
 serverip_lan_error
 }
-
 serverip_lan_error_countdown_7(){
 LANCOUNT=7
 LANCOUNTSTEP=serverip_lan_error_countdown_6
 serverip_lan_error
 }
-
 serverip_lan_error_countdown_6(){
 LANCOUNT=6
 LANCOUNTSTEP=serverip_lan_error_countdown_5
 serverip_lan_error
 }
-
 serverip_lan_error_countdown_5(){
 LANCOUNT=5
 LANCOUNTSTEP=serverip_lan_error_countdown_4
 serverip_lan_error
 }
-
 serverip_lan_error_countdown_4(){
 LANCOUNT=4
 LANCOUNTSTEP=serverip_lan_error_countdown_3
 serverip_lan_error
 }
-
 serverip_lan_error_countdown_3(){
 LANCOUNT=3
 LANCOUNTSTEP=serverip_lan_error_countdown_2
 serverip_lan_error
 }
-
 serverip_lan_error_countdown_2(){
 LANCOUNT=2
 LANCOUNTSTEP=serverip_lan_error_countdown_1
 serverip_lan_error
 }
-
 serverip_lan_error_countdown_1(){
 LANCOUNT=1
 LANCOUNTSTEP=serverip_lan_error_countdown_0
 serverip_lan_error
 }
-
 serverip_lan_error_countdown_0(){
 LANCOUNT=0
 LANCOUNTSTEP=serverip_lan_error_countdown_end
 serverip_lan_error
 }
-
 serverip_lan_error_countdown_end(){
 LANCOUNT=$LAN_COUNTDOWN
 LANCOUNTSTEP=serverip_lan_error_countdown_$LAN_COUNTDOWN
@@ -206,14 +199,14 @@ case $testo in
     ;;
     E|e)
 	{
-			if [ -e /tmp/$CURRENTIP_FILE.tmp ]
-			then
-			    rm /tmp/$CURRENTIP_FILE.tmp
-			else
-			    echo
-			fi
-			echo -e "\e[1;34mEsco dal programma\e[0m"
-			exit 0
+	if [ -e /tmp/$CURRENTIP_FILE.tmp ]
+	then
+	    rm /tmp/$CURRENTIP_FILE.tmp
+	else
+	    echo
+	fi
+	echo -e "\e[1;34mEsco dal programma\e[0m"
+	exit 0
 	}
     ;;
     "")
@@ -223,13 +216,12 @@ case $testo in
 	\e[0m"
 	clear
 	$LANCOUNTSTEP
-#	serverip_internet_static
 	}
     ;;
     *)
-echo -e "\e[1;31m ## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m" && sleep 2
-LANCOUNTSTEP=serverip_lan_error_countdown_$LAN_COUNTDOWN
-serverip_lan_error
+	echo -e "\e[1;31m ## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m" && sleep 2
+	LANCOUNTSTEP=serverip_lan_error_countdown_$LAN_COUNTDOWN
+	$LANCOUNTSTEP
     ;;
 esac
 }
@@ -281,37 +273,32 @@ menu0
 
 serverip_internet_static(){
 echo "Indirizzo IP statico o più affidabile:"
-  SERVERIP=$SERVERIP_INTERNET
+SERVERIP=$SERVERIP_INTERNET
 SERVERIP_INTERNET_STEP=serverip_internet_1
 ping_wan
 }
-
 serverip_internet_1(){
 echo "Indirizzo IP dinamico o memorizzato 1"
-  SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_INTERNET_1 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
+SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_INTERNET_1 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
 SERVERIP_INTERNET_STEP=serverip_internet_2
 ping_wan
 }
-
 serverip_internet_2(){
 echo "Indirizzo IP dinamico o memorizzato 2"
-  SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_INTERNET_2 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
+SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_INTERNET_2 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
 SERVERIP_INTERNET_STEP=serverip_internet_3
 ping_wan
 }
-
 serverip_internet_3(){
 echo "Indirizzo IP dinamico o memorizzato 3"
-  SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_INTERNET_3 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
+SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_INTERNET_3 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
 SERVERIP_INTERNET_STEP=serverip_internet_4
 ping_wan
 }
-
 serverip_internet_4(){
 echo "Indirizzo IP dinamico o memorizzato 4"
-  SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_INTERNET_4 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
-SERVERIP_INTERNET_STEP=serverip_internet_error
-
+SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_INTERNET_4 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
+SERVERIP_INTERNET_STEP=$INTERNETCOUNTSTEP
 ping_wan
 }
 
@@ -320,67 +307,56 @@ INTERNETCOUNT=10
 INTERNETCOUNTSTEP=serverip_internet_error_countdown_9
 serverip_internet_error
 }
-
 serverip_internet_error_countdown_9(){
 INTERNETCOUNT=9
 INTERNETCOUNTSTEP=serverip_internet_error_countdown_8
 serverip_internet_error
 }
-
 serverip_internet_error_countdown_8(){
 INTERNETCOUNT=8
 INTERNETCOUNTSTEP=serverip_internet_error_countdown_7
 serverip_internet_error
 }
-
 serverip_internet_error_countdown_7(){
 INTERNETCOUNT=7
 INTERNETCOUNTSTEP=serverip_internet_error_countdown_6
 serverip_internet_error
 }
-
 serverip_internet_error_countdown_6(){
 INTERNETCOUNT=6
 INTERNETCOUNTSTEP=serverip_internet_error_countdown_5
 serverip_internet_error
 }
-
 serverip_internet_error_countdown_5(){
 INTERNETCOUNT=5
 INTERNETCOUNTSTEP=serverip_internet_error_countdown_4
 serverip_internet_error
 }
-
 serverip_internet_error_countdown_4(){
 INTERNETCOUNT=4
 INTERNETCOUNTSTEP=serverip_internet_error_countdown_3
 serverip_internet_error
 }
-
 serverip_internet_error_countdown_3(){
 INTERNETCOUNT=3
 INTERNETCOUNTSTEP=serverip_internet_error_countdown_2
 serverip_internet_error
 }
-
 serverip_internet_error_countdown_2(){
 INTERNETCOUNT=2
 INTERNETCOUNTSTEP=serverip_internet_error_countdown_1
 serverip_internet_error
 }
-
 serverip_internet_error_countdown_1(){
 INTERNETCOUNT=1
 INTERNETCOUNTSTEP=serverip_internet_error_countdown_0
 serverip_internet_error
 }
-
 serverip_internet_error_countdown_0(){
 INTERNETCOUNT=0
 INTERNETCOUNTSTEP=serverip_internet_error_countdown_end
 serverip_internet_error
 }
-
 serverip_internet_error_countdown_end(){
 INTERNETCOUNT=$INTERNET_COUNTDOWN
 INTERNETCOUNTSTEP=serverip_internet_error_countdown_$INTERNET_COUNTDOWN
@@ -422,14 +398,14 @@ case $testo in
     ;;
     E|e)
 	{
-			if [ -e /tmp/$CURRENTIP_FILE.tmp ]
-			then
-			    rm /tmp/$CURRENTIP_FILE.tmp
-			else
-			    echo
-			fi
-			echo -e "\e[1;34mEsco dal programma\e[0m"
-			exit 0
+	if [ -e /tmp/$CURRENTIP_FILE.tmp ]
+	then
+	    rm /tmp/$CURRENTIP_FILE.tmp
+	else
+	    echo
+	fi
+	echo -e "\e[1;34mEsco dal programma\e[0m"
+	exit 0
 	}
     ;;
     "")
@@ -439,21 +415,19 @@ case $testo in
 	\e[0m"
 	clear
 	$INTERNETCOUNTSTEP
-#	serverip_internet_static
 	}
     ;;
     *)
-echo -e "\e[1;31m ## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m" && sleep 2
-INTERNETCOUNTSTEP=serverip_internet_error_countdown_$INTERNET_COUNTDOWN
-#ping_wan
-serverip_internet_error
+	echo -e "\e[1;31m ## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m" && sleep 2
+	INTERNETCOUNTSTEP=serverip_internet_error_countdown_$INTERNET_COUNTDOWN
+	$INTERNETCOUNTSTEP
     ;;
 esac
 }
 
 serverip_internet_update(){
-	diff -q "$CURRENTIP" "/tmp/$CURRENTIP_FILE.tmp"
-	if [ $? != 0 ]; then
+diff -q "$CURRENTIP" "/tmp/$CURRENTIP_FILE.tmp"
+if [ $? != 0 ]; then
 	echo -e "\e[1;34mProvo ad aggiornare gli indirizzi IP...\e[0m"
 	wget -q $CURRENTIP_LINK -O /tmp/$CURRENTIP_FILE.tmp
 	if [ $? = 0 ]; then
@@ -461,7 +435,7 @@ serverip_internet_update(){
 	else
 		echo
 	fi
-  fi
+fi
 serverip_internet_static
 }
 
@@ -516,7 +490,6 @@ do
   echo -e "\e[1;34m
 ## SSH $SERVERUSERNAME@$SERVERNAME SOCKS
 \e[0m"
-#  sleep 1
   $BELL3
   ssh -i "$KEYFILE" -ND $SOCKSPORT -p $SSHPORT $SERVERUSERNAME@$SERVERIP
 #	menu0
@@ -531,7 +504,6 @@ do
   echo -e "\e[1;34m
 ## SSH $SERVERUSERNAME@$SERVERNAME SSHFS
 \e[0m"
-#  sleep 1
   $BELL3
   fusermount -u "$LOCALMOUNTPOINT"
   sudo mkdir "$LOCALMOUNTPOINT"
@@ -550,7 +522,6 @@ do
   echo -e "\e[1;34m
 ## SSH $SERVERUSERNAME@$SERVERNAME GUI
 \e[0m"
-#  sleep 1
   $BELL3
   ssh -i "$KEYFILE" -X -p $SSHPORT $SERVERUSERNAME@$SERVERIP
 #	menu0
@@ -565,7 +536,6 @@ do
   echo -e "\e[1;34m
 ## SSH $SERVERUSERNAME@$SERVERNAME CLI
 \e[0m"
-#  sleep 1
   $BELL3
   ssh -i "$KEYFILE" -p $SSHPORT $SERVERUSERNAME@$SERVERIP
 #	menu0
@@ -575,13 +545,13 @@ do
     ;;
     E|e)
 	{
-			echo -e "\e[1;34mEsco dal programma\e[0m"
-			exit 0
+	echo -e "\e[1;34mEsco dal programma\e[0m"
+	exit 0
 	}
     ;;
     *)
-echo -e "\e[1;31m## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m"
-    menu
+	echo -e "\e[1;31m## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m"
+	menu
     ;;
 esac
 }
