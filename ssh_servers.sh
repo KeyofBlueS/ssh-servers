@@ -86,7 +86,7 @@ case $testo in
 	{
 	echo -e "\e[1;34m
 ## HAI SCELTO LOCALE\e[0m"
-	ping_lan
+	serverip_lan_static
 	}
     ;;
     R|r)
@@ -107,6 +107,90 @@ case $testo in
 	menu0
     ;;
 esac
+}
+
+serverip_manual(){
+$BELL1
+echo -e "\e[1;34m
+## $SERVERUSERNAME@$SERVERNAME\e[0m"
+echo -e "\e[1;31mInserisci manualmente l'indirizzo IP del server\e[0m"
+unset ip; \
+while ! [ "$ip" ];do
+    printf "IP: %s\r" $ip;
+    read -p IP:\  var;
+    iparray=($( IFS=".";echo $var;));
+    [ ${#iparray[@]} -eq 4 ] && \
+        [ $iparray -ge 0 ] && [ $iparray -le 255 ] && \
+        [ ${iparray[1]} -ge 0 ] && [ ${iparray[1]} -le 255 ] && \
+        [ ${iparray[2]} -ge 0 ] && [ ${iparray[2]} -le 255 ] && \
+        [ ${iparray[3]} -ge 0 ] && [ ${iparray[3]} -le 255 ] && \
+        ip=$var;
+    [ "$ip" ] || echo Formato indirizzo IP non corretto, riprova...;
+  done; \
+  SERVERIP=$ip
+  SERVERIP_LAN=$SERVERIP
+  SERVERIP_INTERNET=$SERVERIP
+SERVERIP_INTERNET_STEP=serverip_manual
+menu0
+}
+
+serverip_lan_static(){
+echo "Indirizzo IP statico o più affidabile:"
+SERVERIP=$SERVERIP_LAN
+SERVERIP_LAN_STEP=serverip_lan_1
+ping_lan
+}
+serverip_lan_1(){
+echo "Indirizzo IP dinamico o memorizzato 1"
+SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_LAN_1 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
+#SERVERIP_LAN_STEP=serverip_lan_2
+SERVERIP_LAN_STEP=$LANCOUNTSTEP
+ping_lan
+}
+serverip_lan_2(){
+echo "Indirizzo IP dinamico o memorizzato 2"
+SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_LAN_2 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
+SERVERIP_LAN_STEP=serverip_lan_3
+ping_lan
+}
+serverip_lan_3(){
+echo "Indirizzo IP dinamico o memorizzato 3"
+SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_LAN_3 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
+SERVERIP_LAN_STEP=serverip_lan_4
+ping_lan
+}
+serverip_lan_4(){
+echo "Indirizzo IP dinamico o memorizzato 4"
+SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_LAN_4 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
+SERVERIP_LAN_STEP=$LANCOUNTSTEP
+ping_lan
+}
+
+ping_lan(){
+while true
+do
+TYPE=LOCALE
+  echo -e "\e[1;34m
+## PING $SERVERUSERNAME@$SERVERNAME  IP=$SERVERIP Port=$SSHPORT
+\e[0m"
+  $BELL1
+  fping -r0 $SERVERIP_LAN | grep "alive"
+  if [ $? = 0 ]; then
+	SERVERIP=`fping -q -r0 -a $SERVERIP_LAN`
+	echo -e "\e[1;34m
+	$SERVERUSERNAME@$SERVERNAME @ $SERVERIP è\e[0m" "\e[1;32mONLINE\e[0m"
+	break
+  fi
+#$LANCOUNTSTEP
+$SERVERIP_LAN_STEP
+done
+if [ -e /tmp/$CURRENTIP_FILE.tmp ]
+then
+    rm /tmp/$CURRENTIP_FILE.tmp
+else
+    echo
+fi
+menu
 }
 
 serverip_lan_error_countdown_10(){
@@ -167,7 +251,8 @@ serverip_lan_error
 serverip_lan_error_countdown_end(){
 LANCOUNT=$LAN_COUNTDOWN
 LANCOUNTSTEP=serverip_lan_error_countdown_$LAN_COUNTDOWN
-ping_lan
+#ping_lan
+serverip_lan_static
 }
 
 serverip_lan_error(){
@@ -194,7 +279,8 @@ case $testo in
 	\e[0m"
 	LANCOUNT=$LAN_COUNTDOWN
 	LANCOUNTSTEP=serverip_lan_error_countdown_$LAN_COUNTDOWN
-	ping_lan
+#	ping_lan
+	serverip_lan_static
 	}
     ;;
     E|e)
@@ -226,51 +312,6 @@ case $testo in
 esac
 }
 
-ping_lan(){
-while true
-do
-TYPE=LOCALE
-  echo -e "\e[1;34m
-## PING $SERVERUSERNAME@$SERVERNAME  IP=$SERVERIP Port=$SSHPORT
-\e[0m"
-  $BELL1
-  fping -r0 $SERVERIP_LAN | grep "alive"
-  if [ $? = 0 ]; then
-	SERVERIP=`fping -q -r0 -a $SERVERIP_LAN`
-	echo -e "\e[1;34m
-	$SERVERUSERNAME@$SERVERNAME @ $SERVERIP è\e[0m" "\e[1;32mONLINE\e[0m"
-	break
-  fi
-$LANCOUNTSTEP
-	done
-menu
-}
-
-serverip_manual(){
-$BELL1
-echo -e "\e[1;34m
-## $SERVERUSERNAME@$SERVERNAME\e[0m"
-echo -e "\e[1;31mInserisci manualmente l'indirizzo IP del server\e[0m"
-unset ip; \
-while ! [ "$ip" ];do
-    printf "IP: %s\r" $ip;
-    read -p IP:\  var;
-    iparray=($( IFS=".";echo $var;));
-    [ ${#iparray[@]} -eq 4 ] && \
-        [ $iparray -ge 0 ] && [ $iparray -le 255 ] && \
-        [ ${iparray[1]} -ge 0 ] && [ ${iparray[1]} -le 255 ] && \
-        [ ${iparray[2]} -ge 0 ] && [ ${iparray[2]} -le 255 ] && \
-        [ ${iparray[3]} -ge 0 ] && [ ${iparray[3]} -le 255 ] && \
-        ip=$var;
-    [ "$ip" ] || echo Formato indirizzo IP non corretto, riprova...;
-  done; \
-  SERVERIP=$ip
-  SERVERIP_LAN=$SERVERIP
-  SERVERIP_INTERNET=$SERVERIP
-SERVERIP_INTERNET_STEP=serverip_manual
-menu0
-}
-
 serverip_internet_static(){
 echo "Indirizzo IP statico o più affidabile:"
 SERVERIP=$SERVERIP_INTERNET
@@ -300,6 +341,31 @@ echo "Indirizzo IP dinamico o memorizzato 4"
 SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_INTERNET_4 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
 SERVERIP_INTERNET_STEP=$INTERNETCOUNTSTEP
 ping_wan
+}
+
+ping_wan(){
+while true
+do
+TYPE=REMOTO
+    echo -e "\e[1;34m
+## NMAP $SERVERUSERNAME@$SERVERNAME  IP=$SERVERIP Port=$SSHPORT
+\e[0m"
+  $BELL1
+  nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open"
+  if [[ $? = 0 ]]; then
+	echo -e "\e[1;34m
+	$SERVERUSERNAME@$SERVERNAME @ $SERVERIP è\e[0m" "\e[1;32mONLINE\e[0m"
+	break
+  fi
+$SERVERIP_INTERNET_STEP
+done
+if [ -e /tmp/$CURRENTIP_FILE.tmp ]
+then
+    rm /tmp/$CURRENTIP_FILE.tmp
+else
+    echo
+fi
+menu
 }
 
 serverip_internet_error_countdown_10(){
@@ -439,33 +505,7 @@ fi
 serverip_internet_static
 }
 
-ping_wan(){
-while true
-do
-TYPE=REMOTO
-    echo -e "\e[1;34m
-## NMAP $SERVERUSERNAME@$SERVERNAME  IP=$SERVERIP Port=$SSHPORT
-\e[0m"
-  $BELL1
-  nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open"
-  if [[ $? = 0 ]]; then
-	echo -e "\e[1;34m
-	$SERVERUSERNAME@$SERVERNAME @ $SERVERIP è\e[0m" "\e[1;32mONLINE\e[0m"
-	break
-  fi
-$SERVERIP_INTERNET_STEP
-	done
-if [ -e /tmp/$CURRENTIP_FILE.tmp ]
-then
-    rm /tmp/$CURRENTIP_FILE.tmp
-else
-    echo
-fi
-menu
-}
-
 menu(){
-clear
 $BELL2
 echo -e "\e[1;34m
 ## L'indirizzo remoto è $SERVERIP ($TYPE)
@@ -487,6 +527,7 @@ case $testo in
 	{
 while true
 do
+  clear
   echo -e "\e[1;34m
 ## SSH $SERVERUSERNAME@$SERVERNAME SOCKS
 \e[0m"
@@ -501,6 +542,7 @@ do
 	{
 while true
 do
+  clear
   echo -e "\e[1;34m
 ## SSH $SERVERUSERNAME@$SERVERNAME SSHFS
 \e[0m"
@@ -519,6 +561,7 @@ do
 	{
 while true
 do
+  clear
   echo -e "\e[1;34m
 ## SSH $SERVERUSERNAME@$SERVERNAME GUI
 \e[0m"
@@ -533,6 +576,7 @@ do
 	{
 while true
 do
+  clear
   echo -e "\e[1;34m
 ## SSH $SERVERUSERNAME@$SERVERNAME CLI
 \e[0m"
@@ -550,6 +594,7 @@ do
 	}
     ;;
     *)
+	clear
 	echo -e "\e[1;31m## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m"
 	menu
     ;;
@@ -604,16 +649,17 @@ CLI - Con il solo supporto alla CLI
 
 --help        Visualizza una descrizione ed opzioni di ssh-servers
 
-### NOTA
+### Nota
 Se i server ssh posseggono un indirizzo ip pubblico dinamico, consiglio fortemente (i due script si integrano a vicenda) di
 utilizzare [current-ip](https://github.com/KeyofBlueS/current-ip) sul lato server.
 "
-exit 0
+$STATUS
 }
 
 if [ "$1" = "--local" ]
 then
-   ping_lan
+#   ping_lan
+   serverip_lan_static
 elif [ "$1" = "--remote" ]
 then
    serverip_internet_static
@@ -629,9 +675,9 @@ then
    givemehelp
 elif [ "$1" = "" ]
 then
-   STATUS="exit 0"
+   STATUS=menu0
    givemehelp
 else
-   STATUS=menu0
-   menu
+   STATUS="exit 0"
+   givemehelp
 fi
