@@ -1,6 +1,6 @@
 # ssh-servers
 
-# Version:    1.5.0
+# Version:    2.0.0
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
