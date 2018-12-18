@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version:    1.5.0
+# Version:    2.0.0
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -41,8 +41,8 @@ LOCALMOUNTPOINT="/media/"$LOCALUSER"/"$SERVERNAME"_SSHFS"
 
 CURRENTIP=$CURRENTIP_PATH$CURRENTIP_FILE
 
-LANCOUNTSTEP=serverip_lan_error_countdown_$LAN_COUNTDOWN
-INTERNETCOUNTSTEP=serverip_internet_error_countdown_$INTERNET_COUNTDOWN
+LANCOUNTSTEP=serverip_error_countdown_$LAN_COUNTDOWN
+INTERNETCOUNTSTEP=serverip_error_countdown_$INTERNET_COUNTDOWN
 
 if [ -e /tmp/$CURRENTIP_FILE.tmp ]
 then
@@ -52,22 +52,32 @@ else
 fi
 
 if echo $AUDIO | grep -qx "BEEP"; then
-BELL1=( "beep" )
-BELL2=( "beep -f 1000 -n -f 2000 -n -f 1500" )
-BELL3=( "beep -f 2000" )
+	BELL1=( "beep" )
+	BELL2=( "beep -f 1000 -n -f 2000 -n -f 1500" )
+	BELL3=( "beep -f 2000" )
 elif echo $AUDIO | grep -qx "SOX"; then
-BELL1=( "play -q -n synth 0.2 square 1000 gain $GAIN fade h 0.01" )
-BELL2=( "play -q -n synth 0.2 square 1000 gain $GAIN : synth 0.2 square 2000 gain $GAIN fade h 0.01 : synth 0.2 square 1500 gain $GAIN fade h 0.01" )
-BELL3=( "play -q -n synth 0.2 square 2000 gain $GAIN fade h 0.01" )
+	BELL1=( "play -q -n synth 0.2 square 1000 gain $GAIN fade h 0.01" )
+	BELL2=( "play -q -n synth 0.2 square 1000 gain $GAIN : synth 0.2 square 2000 gain $GAIN fade h 0.01 : synth 0.2 square 1500 gain $GAIN fade h 0.01" )
+	BELL3=( "play -q -n synth 0.2 square 2000 gain $GAIN fade h 0.01" )
 elif echo $AUDIO | grep -qx "NULL"; then
-BELL0="echo BEEP"
-BELL1="echo BEEP"
-BELL2="echo BEEP"
+	BELL0="echo BEEP"
+	BELL1="echo BEEP"
+	BELL2="echo BEEP"
 else
-BELL0="echo BEEP"
-BELL1="echo BEEP"
-BELL2="echo BEEP"
+	BELL0="echo BEEP"
+	BELL1="echo BEEP"
+	BELL2="echo BEEP"
 fi
+
+serverip_default(){
+if echo $SERVERIP | grep -x "$SERVERIP_LAN" | grep -Eoq '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'; then
+	serverip_lan
+elif echo $SERVERIP | grep -x "$SERVERIP_INTERNET" | grep -Eoq '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'; then
+	serverip_internet
+else
+	givemehelp
+fi
+}
 
 menu0(){
 $BELL2
@@ -86,14 +96,14 @@ case $testo in
 	{
 	echo -e "\e[1;34m
 ## HAI SCELTO LOCALE\e[0m"
-	serverip_lan_static
+	serverip_lan
 	}
     ;;
     R|r)
 	{
 	echo -e "\e[1;34m
 ## HAI SCELTO REMOTO\e[0m"
-	serverip_internet_static
+	serverip_internet
 	}
     ;;
     E|e)
@@ -130,321 +140,151 @@ while ! [ "$ip" ];do
   SERVERIP=$ip
   SERVERIP_LAN=$SERVERIP
   SERVERIP_INTERNET=$SERVERIP
-SERVERIP_INTERNET_STEP=serverip_manual
+SERVERIP_STEP=serverip_manual
 menu0
 }
 
-serverip_lan_static(){
-echo "Indirizzo IP statico o più affidabile:"
-SERVERIP=$SERVERIP_LAN
-SERVERIP_LAN_STEP=serverip_lan_1
-ping_lan
-}
-serverip_lan_1(){
-echo "Indirizzo IP dinamico o memorizzato 1"
-SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_LAN_1 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
-#SERVERIP_LAN_STEP=serverip_lan_2
-SERVERIP_LAN_STEP=$LANCOUNTSTEP
-ping_lan
-}
-serverip_lan_2(){
-echo "Indirizzo IP dinamico o memorizzato 2"
-SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_LAN_2 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
-SERVERIP_LAN_STEP=serverip_lan_3
-ping_lan
-}
-serverip_lan_3(){
-echo "Indirizzo IP dinamico o memorizzato 3"
-SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_LAN_3 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
-SERVERIP_LAN_STEP=serverip_lan_4
-ping_lan
-}
-serverip_lan_4(){
-echo "Indirizzo IP dinamico o memorizzato 4"
-SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_LAN_4 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
-SERVERIP_LAN_STEP=$LANCOUNTSTEP
-ping_lan
-}
-
-ping_lan(){
-while true
-do
+serverip_lan(){
 TYPE=LOCALE
-  echo -e "\e[1;34m
-## PING $SERVERUSERNAME@$SERVERNAME  IP=$SERVERIP Port=$SSHPORT
-\e[0m"
-  $BELL1
-  fping -r0 $SERVERIP_LAN | grep "alive"
-  if [ $? = 0 ]; then
-	SERVERIP=`fping -q -r0 -a $SERVERIP_LAN`
-	echo -e "\e[1;34m
-	$SERVERUSERNAME@$SERVERNAME @ $SERVERIP è\e[0m" "\e[1;32mONLINE\e[0m"
-	break
-  fi
-#$LANCOUNTSTEP
-$SERVERIP_LAN_STEP
-done
-if [ -e /tmp/$CURRENTIP_FILE.tmp ]
-then
-    rm /tmp/$CURRENTIP_FILE.tmp
-else
-    echo
-fi
-menu
-}
-
-serverip_lan_error_countdown_10(){
-LANCOUNT=10
-LANCOUNTSTEP=serverip_lan_error_countdown_9
-serverip_lan_error
-}
-serverip_lan_error_countdown_9(){
-LANCOUNT=9
-LANCOUNTSTEP=serverip_lan_error_countdown_8
-serverip_lan_error
-}
-serverip_lan_error_countdown_8(){
-LANCOUNT=8
-LANCOUNTSTEP=serverip_lan_error_countdown_7
-serverip_lan_error
-}
-serverip_lan_error_countdown_7(){
-LANCOUNT=7
-LANCOUNTSTEP=serverip_lan_error_countdown_6
-serverip_lan_error
-}
-serverip_lan_error_countdown_6(){
-LANCOUNT=6
-LANCOUNTSTEP=serverip_lan_error_countdown_5
-serverip_lan_error
-}
-serverip_lan_error_countdown_5(){
-LANCOUNT=5
-LANCOUNTSTEP=serverip_lan_error_countdown_4
-serverip_lan_error
-}
-serverip_lan_error_countdown_4(){
-LANCOUNT=4
-LANCOUNTSTEP=serverip_lan_error_countdown_3
-serverip_lan_error
-}
-serverip_lan_error_countdown_3(){
-LANCOUNT=3
-LANCOUNTSTEP=serverip_lan_error_countdown_2
-serverip_lan_error
-}
-serverip_lan_error_countdown_2(){
-LANCOUNT=2
-LANCOUNTSTEP=serverip_lan_error_countdown_1
-serverip_lan_error
-}
-serverip_lan_error_countdown_1(){
-LANCOUNT=1
-LANCOUNTSTEP=serverip_lan_error_countdown_0
-serverip_lan_error
-}
-serverip_lan_error_countdown_0(){
-LANCOUNT=0
-LANCOUNTSTEP=serverip_lan_error_countdown_end
-serverip_lan_error
-}
-serverip_lan_error_countdown_end(){
-LANCOUNT=$LAN_COUNTDOWN
-LANCOUNTSTEP=serverip_lan_error_countdown_$LAN_COUNTDOWN
-#ping_lan
+SERVERIP_START_STEP=serverip_lan
+COUNTDOWN=$LAN_COUNTDOWN
+RESET_COUNTDOWNSTEP=$LANCOUNTSTEP
 serverip_lan_static
 }
-
-serverip_lan_error(){
-clear
-echo -e "\e[1;34m
-$SERVERUSERNAME@$SERVERNAME @ $SERVERIP_LAN non raggiungibile, è\e[0m" "\e[1;31mOFFLINE o rete non disponibile\e[0m"
-#	echo -e "\e[1;31mProvo a risvegliare il device...\e[0m"
-#	wakeonlan -i "$SERVERIP" $SERVERMAC
-echo -e "\e[1;31mPremi:
-M per inserire manualmente l'indirizzo IP del server
-R o attendi $LANCOUNT secondo per riprovare
-E per uscire\e[0m"
-read -t 1 -n 1 -p "Scelta (M/R/E): " testo
-case $testo in
-    M|m)
-	{
-	serverip_manual
-	}
-    ;;
-    R|r)
-	{
-	echo -e "\e[1;34m
-	Riprovo...
-	\e[0m"
-	LANCOUNT=$LAN_COUNTDOWN
-	LANCOUNTSTEP=serverip_lan_error_countdown_$LAN_COUNTDOWN
-#	ping_lan
-	serverip_lan_static
-	}
-    ;;
-    E|e)
-	{
-	if [ -e /tmp/$CURRENTIP_FILE.tmp ]
-	then
-	    rm /tmp/$CURRENTIP_FILE.tmp
-	else
-	    echo
-	fi
-	echo -e "\e[1;34mEsco dal programma\e[0m"
-	exit 0
-	}
-    ;;
-    "")
-	{
-	echo "Tempo scaduto"
-	echo -e "\e[1;34m	Riprovo...
-	\e[0m"
-	clear
-	$LANCOUNTSTEP
-	}
-    ;;
-    *)
-	echo -e "\e[1;31m ## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m" && sleep 2
-	LANCOUNTSTEP=serverip_lan_error_countdown_$LAN_COUNTDOWN
-	$LANCOUNTSTEP
-    ;;
-esac
+serverip_lan_static(){
+echo "Indirizzo IP locale statico o più affidabile..."
+SERVERIP=$SERVERIP_LAN
+PING="$(fping -r0 $SERVERIP_LAN | grep "alive")"
+SERVERIP_STEP=serverip_lan_1
+ping_serverip
+}
+serverip_lan_1(){
+echo "Indirizzo IP locale memorizzato 1..."
+SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_LAN_1 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+PING="$(fping -r0 $SERVERIP_LAN | grep "alive")"
+SERVERIP_STEP=$LANCOUNTSTEP
+ping_serverip
 }
 
-serverip_internet_static(){
-echo "Indirizzo IP statico o più affidabile:"
-SERVERIP=$SERVERIP_INTERNET
-SERVERIP_INTERNET_STEP=serverip_internet_1
-ping_wan
-}
-serverip_internet_1(){
-echo "Indirizzo IP dinamico o memorizzato 1"
-SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_INTERNET_1 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
-SERVERIP_INTERNET_STEP=serverip_internet_2
-ping_wan
-}
-serverip_internet_2(){
-echo "Indirizzo IP dinamico o memorizzato 2"
-SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_INTERNET_2 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
-SERVERIP_INTERNET_STEP=serverip_internet_3
-ping_wan
-}
-serverip_internet_3(){
-echo "Indirizzo IP dinamico o memorizzato 3"
-SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_INTERNET_3 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
-SERVERIP_INTERNET_STEP=serverip_internet_4
-ping_wan
-}
-serverip_internet_4(){
-echo "Indirizzo IP dinamico o memorizzato 4"
-SERVERIP=`cat "$CURRENTIP" | grep SERVERIP_INTERNET_4 | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'`
-SERVERIP_INTERNET_STEP=$INTERNETCOUNTSTEP
-ping_wan
-}
-
-ping_wan(){
-while true
-do
+serverip_internet(){
 TYPE=REMOTO
-    echo -e "\e[1;34m
-## NMAP $SERVERUSERNAME@$SERVERNAME  IP=$SERVERIP Port=$SSHPORT
-\e[0m"
-  $BELL1
-  nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open"
-  if [[ $? = 0 ]]; then
-	echo -e "\e[1;34m
-	$SERVERUSERNAME@$SERVERNAME @ $SERVERIP è\e[0m" "\e[1;32mONLINE\e[0m"
-	break
-  fi
-$SERVERIP_INTERNET_STEP
-done
-if [ -e /tmp/$CURRENTIP_FILE.tmp ]
-then
-    rm /tmp/$CURRENTIP_FILE.tmp
-else
-    echo
-fi
-menu
-}
-
-serverip_internet_error_countdown_10(){
-INTERNETCOUNT=10
-INTERNETCOUNTSTEP=serverip_internet_error_countdown_9
-serverip_internet_error
-}
-serverip_internet_error_countdown_9(){
-INTERNETCOUNT=9
-INTERNETCOUNTSTEP=serverip_internet_error_countdown_8
-serverip_internet_error
-}
-serverip_internet_error_countdown_8(){
-INTERNETCOUNT=8
-INTERNETCOUNTSTEP=serverip_internet_error_countdown_7
-serverip_internet_error
-}
-serverip_internet_error_countdown_7(){
-INTERNETCOUNT=7
-INTERNETCOUNTSTEP=serverip_internet_error_countdown_6
-serverip_internet_error
-}
-serverip_internet_error_countdown_6(){
-INTERNETCOUNT=6
-INTERNETCOUNTSTEP=serverip_internet_error_countdown_5
-serverip_internet_error
-}
-serverip_internet_error_countdown_5(){
-INTERNETCOUNT=5
-INTERNETCOUNTSTEP=serverip_internet_error_countdown_4
-serverip_internet_error
-}
-serverip_internet_error_countdown_4(){
-INTERNETCOUNT=4
-INTERNETCOUNTSTEP=serverip_internet_error_countdown_3
-serverip_internet_error
-}
-serverip_internet_error_countdown_3(){
-INTERNETCOUNT=3
-INTERNETCOUNTSTEP=serverip_internet_error_countdown_2
-serverip_internet_error
-}
-serverip_internet_error_countdown_2(){
-INTERNETCOUNT=2
-INTERNETCOUNTSTEP=serverip_internet_error_countdown_1
-serverip_internet_error
-}
-serverip_internet_error_countdown_1(){
-INTERNETCOUNT=1
-INTERNETCOUNTSTEP=serverip_internet_error_countdown_0
-serverip_internet_error
-}
-serverip_internet_error_countdown_0(){
-INTERNETCOUNT=0
-INTERNETCOUNTSTEP=serverip_internet_error_countdown_end
-serverip_internet_error
-}
-serverip_internet_error_countdown_end(){
-INTERNETCOUNT=$INTERNET_COUNTDOWN
-INTERNETCOUNTSTEP=serverip_internet_error_countdown_$INTERNET_COUNTDOWN
+SERVERIP_START_STEP=serverip_internet
+COUNTDOWN=$INTERNET_COUNTDOWN
+RESET_COUNTDOWNSTEP=$INTERNETCOUNTSTEP
 serverip_internet_static
 }
+serverip_internet_static(){
+echo "Indirizzo IP pubblico statico o più affidabile..."
+SERVERIP=$SERVERIP_INTERNET
+PING="$(nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open")"
+SERVERIP_STEP=serverip_internet_1
+ping_serverip
+}
+serverip_internet_1(){
+echo "Indirizzo IP pubblico memorizzato 1..."
+SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_INTERNET_1 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+PING="$(nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open")"
+SERVERIP_STEP=serverip_internet_2
+ping_serverip
+}
+serverip_internet_2(){
+echo "Indirizzo IP pubblico memorizzato 2..."
+SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_INTERNET_2 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+PING="$(nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open")"
+SERVERIP_STEP=serverip_internet_3
+ping_serverip
+}
+serverip_internet_3(){
+echo "Indirizzo IP pubblico memorizzato 3..."
+SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_INTERNET_3 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+PING="$(nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open")"
+SERVERIP_STEP=serverip_internet_4
+ping_serverip
+}
+serverip_internet_4(){
+echo "Indirizzo IP pubblico memorizzato 4..."
+SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_INTERNET_4 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+PING="$(nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open")"
+SERVERIP_STEP=$INTERNETCOUNTSTEP
+ping_serverip
+}
 
-serverip_internet_error(){
+serverip_error_countdown_10(){
+COUNTDOWN=10
+COUNTDOWNSTEP=serverip_error_countdown_9
+serverip_error
+}
+serverip_error_countdown_9(){
+COUNTDOWN=9
+COUNTDOWNSTEP=serverip_error_countdown_8
+serverip_error
+}
+serverip_error_countdown_8(){
+COUNTDOWN=8
+COUNTDOWNSTEP=serverip_error_countdown_7
+serverip_error
+}
+serverip_error_countdown_7(){
+COUNTDOWN=7
+COUNTDOWNSTEP=serverip_error_countdown_6
+serverip_error
+}
+serverip_error_countdown_6(){
+COUNTDOWN=6
+COUNTDOWNSTEP=serverip_error_countdown_5
+serverip_error
+}
+serverip_error_countdown_5(){
+COUNTDOWN=5
+COUNTDOWNSTEP=serverip_error_countdown_4
+serverip_error
+}
+serverip_error_countdown_4(){
+COUNTDOWN=4
+COUNTDOWNSTEP=serverip_error_countdown_3
+serverip_error
+}
+serverip_error_countdown_3(){
+COUNTDOWN=3
+COUNTDOWNSTEP=serverip_error_countdown_2
+serverip_error
+}
+serverip_error_countdown_2(){
+COUNTDOWN=2
+COUNTDOWNSTEP=serverip_error_countdown_1
+serverip_error
+}
+serverip_error_countdown_1(){
+COUNTDOWN=1
+COUNTDOWNSTEP=serverip_error_countdown_0
+serverip_error
+}
+serverip_error_countdown_0(){
+COUNTDOWN=0
+COUNTDOWNSTEP=serverip_error_countdown_end
+serverip_error
+}
+serverip_error_countdown_end(){
+$SERVERIP_START_STEP
+}
+
+serverip_error(){
 clear
 echo -e "\e[1;34m
-$SERVERUSERNAME@$SERVERNAME non raggiungibile, è\e[0m" "\e[1;31mOFFLINE o rete non disponibile\e[0m"
+$SERVERUSERNAME@$SERVERNAME @ $SERVERIP ($TYPE) non raggiungibile,
+è\e[0m" "\e[1;31mOFFLINE o rete non disponibile\e[0m"
 #	echo -e "\e[1;31mProvo a risvegliare il device...\e[0m"
 #	wakeonlan -i "$SERVERIP" $SERVERMAC
 echo -e "\e[1;31mPremi:
 A per provare ad aggiornare gli indirizzi IP
 M per inserire manualmente l'indirizzo IP del server
-R o attendi $INTERNETCOUNT secondi per riprovare
+R o attendi $COUNTDOWN secondi per riprovare
 E per uscire\e[0m"
 read -t 1 -n 1 -p "Scelta (A/M/R/E): " testo
 case $testo in
     A|a)
 	{
-	serverip_internet_update
+	serverip_update
 	}
     ;;
     M|m)
@@ -457,9 +297,7 @@ case $testo in
 	echo -e "\e[1;34m
 	Riprovo...
 	\e[0m"
-	INTERNETCOUNT=$INTERNET_COUNTDOWN
-	INTERNETCOUNTSTEP=serverip_internet_error_countdown_$INTERNET_COUNTDOWN
-	serverip_internet_static
+	$SERVERIP_START_STEP
 	}
     ;;
     E|e)
@@ -479,19 +317,17 @@ case $testo in
 	echo "Tempo scaduto"
 	echo -e "\e[1;34m	Riprovo...
 	\e[0m"
-	clear
-	$INTERNETCOUNTSTEP
+	$COUNTDOWNSTEP	
 	}
     ;;
     *)
 	echo -e "\e[1;31m ## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m" && sleep 2
-	INTERNETCOUNTSTEP=serverip_internet_error_countdown_$INTERNET_COUNTDOWN
-	$INTERNETCOUNTSTEP
+	$RESET_COUNTDOWNSTEP
     ;;
 esac
 }
 
-serverip_internet_update(){
+serverip_update(){
 diff -q "$CURRENTIP" "/tmp/$CURRENTIP_FILE.tmp"
 if [ $? != 0 ]; then
 	echo -e "\e[1;34mProvo ad aggiornare gli indirizzi IP...\e[0m"
@@ -502,15 +338,28 @@ if [ $? != 0 ]; then
 		echo
 	fi
 fi
-serverip_internet_static
+$SERVERIP_START_STEP
+}
+
+ping_serverip(){
+echo -e "\e[1;34m
+## PING $SERVERUSERNAME@$SERVERNAME  IP=$SERVERIP Port=$SSHPORT
+\e[0m"
+$BELL1
+if echo $PING | grep -q "alive"; then
+	SERVERIP="$(fping -q -r0 -a $SERVERIP_LAN)"
+	menu
+elif echo $PING | grep -q "$SSHPORT/tcp open"; then
+	menu
+else
+$SERVERIP_STEP
+fi
 }
 
 menu(){
+PING=""
 $BELL2
-echo -e "\e[1;34m
-## L'indirizzo remoto è $SERVERIP ($TYPE)
-
-## $SERVERUSERNAME@$SERVERNAME\e[0m"
+echo -e "\e[1;34m$SERVERUSERNAME@$SERVERNAME @ $SERVERIP ($TYPE) è\e[0m" "\e[1;32mONLINE\e[0m"
 echo -e "\e[1;31m
 Che tipo di collegamento vuoi effettuare?
 (S)ocks - Crea un socks server per condividere
@@ -525,66 +374,50 @@ read -p "Scelta (S/M/G/C/E): " testo
 case $testo in
     S|s)
 	{
-while true
-do
-  clear
-  echo -e "\e[1;34m
-## SSH $SERVERUSERNAME@$SERVERNAME SOCKS
-\e[0m"
-  $BELL3
-  ssh -i "$KEYFILE" -ND $SOCKSPORT -p $SSHPORT $SERVERUSERNAME@$SERVERIP
-#	menu0
-	menu
-	done
+	clear
+	echo -e "\e[1;34m
+	## SSH $SERVERUSERNAME@$SERVERNAME SOCKS
+	\e[0m"
+	$BELL3
+	ssh -i "$KEYFILE" -ND $SOCKSPORT -p $SSHPORT $SERVERUSERNAME@$SERVERIP
+	$SERVERIP_START_STEP
 	}
     ;;
     M|m)
 	{
-while true
-do
-  clear
-  echo -e "\e[1;34m
+	clear
+	echo -e "\e[1;34m
 ## SSH $SERVERUSERNAME@$SERVERNAME SSHFS
 \e[0m"
-  $BELL3
-  fusermount -u "$LOCALMOUNTPOINT"
-  sudo mkdir "$LOCALMOUNTPOINT"
-  sudo chown $LOCALUSER "$LOCALMOUNTPOINT"
-  sshfs -d -o IdentityFile="$KEYFILE" -o allow_other -o reconnect -o ServerAliveInterval=15 $SERVERUSERNAME@$SERVERIP:"$REMOTEMOUNTPOINT" "$LOCALMOUNTPOINT" -p $SSHPORT -C
-  fusermount -u "$LOCALMOUNTPOINT"
-#	menu0
-	menu
-	done
+	$BELL3
+	fusermount -u "$LOCALMOUNTPOINT"
+	sudo mkdir "$LOCALMOUNTPOINT"
+	sudo chown $LOCALUSER "$LOCALMOUNTPOINT"
+	sshfs -d -o IdentityFile="$KEYFILE" -o allow_other -o reconnect -o ServerAliveInterval=15 $SERVERUSERNAME@$SERVERIP:"$REMOTEMOUNTPOINT" "$LOCALMOUNTPOINT" -p $SSHPORT -C
+	fusermount -u "$LOCALMOUNTPOINT"
+	$SERVERIP_START_STEP
 	}
     ;;
     G|g)
 	{
-while true
-do
-  clear
-  echo -e "\e[1;34m
+	clear
+	echo -e "\e[1;34m
 ## SSH $SERVERUSERNAME@$SERVERNAME GUI
 \e[0m"
-  $BELL3
-  ssh -i "$KEYFILE" -X -p $SSHPORT $SERVERUSERNAME@$SERVERIP
-#	menu0
-	menu
-	done
+	$BELL3
+	ssh -i "$KEYFILE" -X -p $SSHPORT $SERVERUSERNAME@$SERVERIP
+	$SERVERIP_START_STEP
 	}
     ;;
     C|c)
 	{
-while true
-do
-  clear
-  echo -e "\e[1;34m
+	clear
+	echo -e "\e[1;34m
 ## SSH $SERVERUSERNAME@$SERVERNAME CLI
 \e[0m"
-  $BELL3
-  ssh -i "$KEYFILE" -p $SSHPORT $SERVERUSERNAME@$SERVERIP
-#	menu0
-	menu
-	done
+	$BELL3
+	ssh -i "$KEYFILE" -p $SSHPORT $SERVERUSERNAME@$SERVERIP
+	$SERVERIP_START_STEP
 	}
     ;;
     E|e)
@@ -605,7 +438,7 @@ givemehelp(){
 echo "
 # ssh-servers
 
-# Version:    1.5.0
+# Version:    2.0.0
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -653,31 +486,27 @@ CLI - Con il solo supporto alla CLI
 Se i server ssh posseggono un indirizzo ip pubblico dinamico, consiglio fortemente (i due script si integrano a vicenda) di
 utilizzare [current-ip](https://github.com/KeyofBlueS/current-ip) sul lato server.
 "
-$STATUS
+exit 0
 }
 
-if [ "$1" = "--local" ]
+if [ "$1" = "--default" ]
 then
-#   ping_lan
-   serverip_lan_static
+   serverip_default
+elif [ "$1" = "--local" ]
+then
+   serverip_lan
 elif [ "$1" = "--remote" ]
 then
-   serverip_internet_static
+   serverip_internet
 elif [ "$1" = "--manual" ]
 then
    serverip_manual
-elif [ "$1" = "--default" ]
-then
-   menu
 elif [ "$1" = "--help" ]
 then
-   STATUS="exit 0"
    givemehelp
 elif [ "$1" = "" ]
 then
-   STATUS=menu0
-   givemehelp
+   serverip_default
 else
-   STATUS="exit 0"
    givemehelp
 fi
