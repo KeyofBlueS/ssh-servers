@@ -63,7 +63,7 @@ export SERVERIP=$SERVERIP_INTERNET
 # NULL  Disattiva il segnale acustico (default)
 export AUDIO=BEEP
 # Regola il volume delle segnalazioni acustiche per SOX
-GAIN="-50"
+export GAIN="-50"
 
 ############################## Avvio collegamento ##############################
 # Percorso dello script per il collegamento (es. /opt/ssh-servers/ssh_servers.sh $@)
