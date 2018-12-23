@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version:    2.0.0
+# Version:    2.0.1
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -36,20 +36,19 @@ done
 #SERVERIP=$SERVERIP_LAN
 #AUDIO=BEEP
 
+if [[ -e "$CURRENTIP_PATH$CURRENTIP_FILE" ]]; then
+CURRENTIP="$CURRENTIP_PATH$CURRENTIP_FILE"
+else
+CURRENTIP="/dev/null"
+fi
+
 LOCALUSER=$USER
 LOCALMOUNTPOINT="/media/"$LOCALUSER"/"$SERVERNAME"_SSHFS"
-
-CURRENTIP=$CURRENTIP_PATH$CURRENTIP_FILE
 
 LANCOUNTSTEP=serverip_error_countdown_$LAN_COUNTDOWN
 INTERNETCOUNTSTEP=serverip_error_countdown_$INTERNET_COUNTDOWN
 
-if [ -e /tmp/$CURRENTIP_FILE.tmp ]
-then
-    rm /tmp/$CURRENTIP_FILE.tmp
-else
-    echo
-fi
+rm -f /tmp/$CURRENTIP_FILE.tmp
 
 if echo $AUDIO | grep -qx "BEEP"; then
 	BELL1=( "beep" )
@@ -70,9 +69,9 @@ else
 fi
 
 serverip_default(){
-if echo $SERVERIP | grep -x "$SERVERIP_LAN" | grep -Eoq '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'; then
+if echo "$SERVERIP" | grep -x "$SERVERIP_LAN" | grep -Eoq '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'; then
 	serverip_lan
-elif echo $SERVERIP | grep -x "$SERVERIP_INTERNET" | grep -Eoq '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'; then
+elif echo "$SERVERIP" | grep -x "$SERVERIP_INTERNET" | grep -Eoq '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'; then
 	serverip_internet
 else
 	givemehelp
@@ -82,7 +81,7 @@ fi
 menu0(){
 $BELL2
 echo -e "\e[1;34m
-## $SERVERUSERNAME@$SERVERNAME IP=$SERVERIP Port=$SSHPORT\e[0m"
+## $SERVERUSERNAME@$SERVERNAME IP="$SERVERIP" Port=$SSHPORT\e[0m"
 echo -e "\e[1;31m
 Che tipo di collegamento vuoi effettuare?
 (L)ocale
@@ -137,9 +136,9 @@ while ! [ "$ip" ];do
         ip=$var;
     [ "$ip" ] || echo Formato indirizzo IP non corretto, riprova...;
   done; \
-  SERVERIP=$ip
-  SERVERIP_LAN=$SERVERIP
-  SERVERIP_INTERNET=$SERVERIP
+SERVERIP="$ip"
+SERVERIP_LAN="$SERVERIP"
+SERVERIP_INTERNET="$SERVERIP"
 SERVERIP_STEP=serverip_manual
 menu0
 }
@@ -149,19 +148,24 @@ TYPE=LOCALE
 SERVERIP_START_STEP=serverip_lan
 COUNTDOWN=$LAN_COUNTDOWN
 RESET_COUNTDOWNSTEP=$LANCOUNTSTEP
+if [[ -e "$CURRENTIP_PATH$CURRENTIP_FILE" ]]; then
+SERVERIP_STEP=serverip_lan_1
+else
+SERVERIP_STEP=$LANCOUNTSTEP
+fi
 serverip_lan_static
 }
 serverip_lan_static(){
 echo "Indirizzo IP locale statico o più affidabile..."
-SERVERIP=$SERVERIP_LAN
+SERVERIP="$SERVERIP_LAN"
 PING="$(fping -r0 $SERVERIP_LAN | grep "alive")"
-SERVERIP_STEP=serverip_lan_1
+#SERVERIP_STEP=serverip_lan_1
 ping_serverip
 }
 serverip_lan_1(){
 echo "Indirizzo IP locale memorizzato 1..."
 SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_LAN_1 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
-PING="$(fping -r0 $SERVERIP_LAN | grep "alive")"
+PING="$(fping -r0 "$SERVERIP" | grep "alive")"
 SERVERIP_STEP=$LANCOUNTSTEP
 ping_serverip
 }
@@ -171,6 +175,11 @@ TYPE=REMOTO
 SERVERIP_START_STEP=serverip_internet
 COUNTDOWN=$INTERNET_COUNTDOWN
 RESET_COUNTDOWNSTEP=$INTERNETCOUNTSTEP
+if [[ -e "$CURRENTIP_PATH$CURRENTIP_FILE" ]]; then
+SERVERIP_STEP=serverip_lan_1
+else
+SERVERIP_STEP=$INTERNETCOUNTSTEP
+fi
 serverip_internet_static
 }
 serverip_internet_static(){
@@ -302,12 +311,7 @@ case $testo in
     ;;
     E|e)
 	{
-	if [ -e /tmp/$CURRENTIP_FILE.tmp ]
-	then
-	    rm /tmp/$CURRENTIP_FILE.tmp
-	else
-	    echo
-	fi
+	rm -f /tmp/$CURRENTIP_FILE.tmp
 	echo -e "\e[1;34mEsco dal programma\e[0m"
 	exit 0
 	}
@@ -338,7 +342,7 @@ if [ $? != 0 ]; then
 		echo
 	fi
 fi
-$SERVERIP_START_STEP
+	$SERVERIP_START_STEP
 }
 
 ping_serverip(){
@@ -347,12 +351,12 @@ echo -e "\e[1;34m
 \e[0m"
 $BELL1
 if echo $PING | grep -q "alive"; then
-	SERVERIP="$(fping -q -r0 -a $SERVERIP_LAN)"
+	SERVERIP="$(fping -q -r0 -a $SERVERIP)"
 	menu
 elif echo $PING | grep -q "$SSHPORT/tcp open"; then
 	menu
 else
-$SERVERIP_STEP
+	$SERVERIP_STEP
 fi
 }
 
@@ -438,7 +442,7 @@ givemehelp(){
 echo "
 # ssh-servers
 
-# Version:    2.0.0
+# Version:    2.0.1
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
