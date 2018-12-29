@@ -188,7 +188,6 @@ serverip_internet_static(){
 echo "Indirizzo IP pubblico statico o più affidabile..."
 SERVERIP=$SERVERIP_INTERNET
 PING="$(nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open")"
-SERVERIP_STEP=serverip_internet_1
 ping_serverip
 }
 serverip_internet_1(){
