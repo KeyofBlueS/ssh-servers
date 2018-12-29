@@ -63,8 +63,8 @@ export SERVERIP_INTERNET="$(cat "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep SERVERI
 # inserire un valore da 0 a 10, durante il countdown viene comunque chiesto all'utente come proseguire
 # oppure inserire exit per non riprovare automaticamente ed uscire dallo script
 # oppure inserire ask per non riprovare automaticamente, viene chiesto all'utente come proseguire
-#export LAN_COUNTDOWN=exit
-#export LAN_COUNTDOWN=ask
+#export INTERNET_COUNTDOWN=exit
+#export INTERNET_COUNTDOWN=ask
 export INTERNET_COUNTDOWN=10
 
 ############################## Impostazioni per il tipo di collegamento preferito ##############################
