@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version:    2.0.1
+# Version:    2.0.3
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -36,8 +36,8 @@ done
 #SERVERIP=$SERVERIP_LAN
 #AUDIO=BEEP
 
-if [[ -e "$CURRENTIP_PATH$CURRENTIP_FILE" ]]; then
-CURRENTIP="$CURRENTIP_PATH$CURRENTIP_FILE"
+if [[ -e "$CURRENTIP_PATH/$CURRENTIP_FILE" ]]; then
+CURRENTIP="$CURRENTIP_PATH/$CURRENTIP_FILE"
 else
 CURRENTIP="/dev/null"
 fi
@@ -47,6 +47,8 @@ LOCALMOUNTPOINT="/media/"$LOCALUSER"/"$SERVERNAME"_SSHFS"
 
 LANCOUNTSTEP=serverip_error_countdown_$LAN_COUNTDOWN
 INTERNETCOUNTSTEP=serverip_error_countdown_$INTERNET_COUNTDOWN
+
+READTIME="-t 1 -n 1"
 
 rm -f /tmp/$CURRENTIP_FILE.tmp
 
@@ -148,7 +150,7 @@ TYPE=LOCALE
 SERVERIP_START_STEP=serverip_lan
 COUNTDOWN=$LAN_COUNTDOWN
 RESET_COUNTDOWNSTEP=$LANCOUNTSTEP
-if [[ -e "$CURRENTIP_PATH$CURRENTIP_FILE" ]]; then
+if [[ -e "$CURRENTIP_PATH/$CURRENTIP_FILE" ]]; then
 SERVERIP_STEP=serverip_lan_1
 else
 SERVERIP_STEP=$LANCOUNTSTEP
@@ -175,8 +177,8 @@ TYPE=REMOTO
 SERVERIP_START_STEP=serverip_internet
 COUNTDOWN=$INTERNET_COUNTDOWN
 RESET_COUNTDOWNSTEP=$INTERNETCOUNTSTEP
-if [[ -e "$CURRENTIP_PATH$CURRENTIP_FILE" ]]; then
-SERVERIP_STEP=serverip_lan_1
+if [[ -e "$CURRENTIP_PATH/$CURRENTIP_FILE" ]]; then
+SERVERIP_STEP=serverip_internet_1
 else
 SERVERIP_STEP=$INTERNETCOUNTSTEP
 fi
@@ -221,60 +223,86 @@ ping_serverip
 serverip_error_countdown_10(){
 COUNTDOWN=10
 COUNTDOWNSTEP=serverip_error_countdown_9
+READTIMETEXT="o attendi $COUNTDOWN secondi "
 serverip_error
 }
 serverip_error_countdown_9(){
 COUNTDOWN=9
 COUNTDOWNSTEP=serverip_error_countdown_8
+READTIMETEXT="o attendi $COUNTDOWN secondi "
 serverip_error
 }
 serverip_error_countdown_8(){
 COUNTDOWN=8
 COUNTDOWNSTEP=serverip_error_countdown_7
+READTIMETEXT="o attendi $COUNTDOWN secondi "
 serverip_error
 }
 serverip_error_countdown_7(){
 COUNTDOWN=7
 COUNTDOWNSTEP=serverip_error_countdown_6
+READTIMETEXT="o attendi $COUNTDOWN secondi "
 serverip_error
 }
 serverip_error_countdown_6(){
 COUNTDOWN=6
 COUNTDOWNSTEP=serverip_error_countdown_5
+READTIMETEXT="o attendi $COUNTDOWN secondi "
 serverip_error
 }
 serverip_error_countdown_5(){
 COUNTDOWN=5
 COUNTDOWNSTEP=serverip_error_countdown_4
+READTIMETEXT="o attendi $COUNTDOWN secondi "
 serverip_error
 }
 serverip_error_countdown_4(){
 COUNTDOWN=4
 COUNTDOWNSTEP=serverip_error_countdown_3
+READTIMETEXT="o attendi $COUNTDOWN secondi "
 serverip_error
 }
 serverip_error_countdown_3(){
 COUNTDOWN=3
 COUNTDOWNSTEP=serverip_error_countdown_2
+READTIMETEXT="o attendi $COUNTDOWN secondi "
 serverip_error
 }
 serverip_error_countdown_2(){
 COUNTDOWN=2
 COUNTDOWNSTEP=serverip_error_countdown_1
+READTIMETEXT="o attendi $COUNTDOWN secondi "
 serverip_error
 }
 serverip_error_countdown_1(){
 COUNTDOWN=1
 COUNTDOWNSTEP=serverip_error_countdown_0
+READTIMETEXT="o attendi $COUNTDOWN secondi "
 serverip_error
 }
 serverip_error_countdown_0(){
 COUNTDOWN=0
 COUNTDOWNSTEP=serverip_error_countdown_end
+READTIMETEXT="o attendi $COUNTDOWN secondi "
 serverip_error
 }
 serverip_error_countdown_end(){
+echo "Tempo scaduto"
+echo -e "\e[1;34m
+	Riprovo...
+\e[0m"
 $SERVERIP_START_STEP
+}
+serverip_error_countdown_ask(){
+READTIME="-n 2"
+serverip_error
+}
+serverip_error_countdown_exit(){
+echo -e "\e[1;34m
+$SERVERUSERNAME@$SERVERNAME @ $SERVERIP ($TYPE) non raggiungibile,
+è\e[0m" "\e[1;31mOFFLINE o rete non disponibile\e[0m"
+echo -e "\e[1;34mEsco dal programma\e[0m"
+exit 0
 }
 
 serverip_error(){
@@ -285,11 +313,12 @@ $SERVERUSERNAME@$SERVERNAME @ $SERVERIP ($TYPE) non raggiungibile,
 #	echo -e "\e[1;31mProvo a risvegliare il device...\e[0m"
 #	wakeonlan -i "$SERVERIP" $SERVERMAC
 echo -e "\e[1;31mPremi:
-A per provare ad aggiornare gli indirizzi IP
-M per inserire manualmente l'indirizzo IP del server
-R o attendi $COUNTDOWN secondi per riprovare
+A per provare ad (a)ggiornare gli indirizzi IP
+M per inserire (m)anualmente l'indirizzo IP del server
+O per provare a collegarsi c(o)munque al server
+R "$READTIMETEXT"per (r)iprovare
 E per uscire\e[0m"
-read -t 1 -n 1 -p "Scelta (A/M/R/E): " testo
+read $READTIME -p "Scelta (A/M/O/R/E): " testo
 case $testo in
     A|a)
 	{
@@ -299,6 +328,11 @@ case $testo in
     M|m)
 	{
 	serverip_manual
+	}
+    ;;
+    O|o)
+	{
+	menu
 	}
     ;;
     R|r)
@@ -318,9 +352,6 @@ case $testo in
     ;;
     "")
 	{
-	echo "Tempo scaduto"
-	echo -e "\e[1;34m	Riprovo...
-	\e[0m"
 	$COUNTDOWNSTEP	
 	}
     ;;
@@ -332,17 +363,24 @@ esac
 }
 
 serverip_update(){
-diff -q "$CURRENTIP" "/tmp/$CURRENTIP_FILE.tmp"
-if [ $? != 0 ]; then
-	echo -e "\e[1;34mProvo ad aggiornare gli indirizzi IP...\e[0m"
-	wget -q $CURRENTIP_LINK -O /tmp/$CURRENTIP_FILE.tmp
+echo -e "\e[1;34m
+Provo ad aggiornare gli indirizzi IP...\e[0m"
+rm -f /tmp/$CURRENTIP_FILE.tmp
+wget -q $CURRENTIP_LINK -O /tmp/$CURRENTIP_FILE.tmp
+cat "/tmp/$CURRENTIP_FILE.tmp" | grep -q "export SERVER"
+if [ $? = 0 ]; then
+	diff -q "$CURRENTIP" "/tmp/$CURRENTIP_FILE.tmp"
 	if [ $? = 0 ]; then
-		cp /tmp/$CURRENTIP_FILE.tmp $CURRENTIP
+		echo -e "\e[1;34m ## Era già aggiornato!\e[0m"
+		rm -f /tmp/$CURRENTIP_FILE.tmp
 	else
-		echo
+		echo -e "\e[1;34m ## Fatto!\e[0m"
+		mv /tmp/$CURRENTIP_FILE.tmp $CURRENTIP
 	fi
+else
+	echo -e "\e[1;31m ## FORMATO FILE NON CORRETTO o NON RAGGIUNGIBILE!\e[0m" && sleep 5
 fi
-	$SERVERIP_START_STEP
+$SERVERIP_START_STEP
 }
 
 ping_serverip(){
@@ -354,6 +392,7 @@ if echo $PING | grep -q "alive"; then
 	SERVERIP="$(fping -q -r0 -a $SERVERIP)"
 	menu
 elif echo $PING | grep -q "$SSHPORT/tcp open"; then
+	echo -e "\e[1;34m$SERVERUSERNAME@$SERVERNAME @ $SERVERIP ($TYPE) è\e[0m" "\e[1;32mONLINE\e[0m"
 	menu
 else
 	$SERVERIP_STEP
@@ -363,7 +402,6 @@ fi
 menu(){
 PING=""
 $BELL2
-echo -e "\e[1;34m$SERVERUSERNAME@$SERVERNAME @ $SERVERIP ($TYPE) è\e[0m" "\e[1;32mONLINE\e[0m"
 echo -e "\e[1;31m
 Che tipo di collegamento vuoi effettuare?
 (S)ocks - Crea un socks server per condividere
@@ -442,7 +480,7 @@ givemehelp(){
 echo "
 # ssh-servers
 
-# Version:    2.0.1
+# Version:    2.0.3
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
