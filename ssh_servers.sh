@@ -181,7 +181,7 @@ if nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp ope
 	PING="$SSHPORT/tcp open"
 fi
 
-SERVERIP_START_STEP=ping_serverip
+SERVERIP_START_STEP=menu
 SERVERIP_STEP=manual_ssh
 echo -e "\e[1;34m
 ### Connessione...\e[0m"
