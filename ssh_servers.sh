@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version:    2.1.1
+# Version:    2.1.2
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -113,13 +113,88 @@ else
 	GAIN=-25
 fi
 
+manual_ssh(){
+echo -e "\e[1;34m
+## Connessione manuale
+\e[1;31mSi consiglia di creare un file di configurazione digitando:
+$ ssh-servers --config
+
+
+### ATTENZIONE: in questa fase, prima del collegamento, non viene controllata la validità delle informazioni inserite!
+Equivale ad utilizzare ssh-client manualmente.\e[1;34m
+
+### Inserisci il percorso del file chiave, richiesto per il collegamento tramite key authtentication, e premi invio
+Se il file non è disponibile o nel dubbio, lascia il campo vuoto e premi invio\e[0m"
+read KEYFILE
+echo -e "\e[1;34m
+### Inserisci la porta in ascolto del server ssh e premi invio
+Nel dubbio, lascia il campo vuoto e premi invio, verrà impostata la porta di default (22)\e[0m"
+read SSHPORT
+if echo $SSHPORT | grep -Eoq '([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])'; then
+	echo -n
+else
+	echo 22
+	SSHPORT=22
+fi
+echo -e "\e[1;34m
+### Inserisci la porta in cui avviare un Server SOCKS per condividere la connessione del server sul client e premi invio
+Nel dubbio, lascia il campo vuoto e premi invio, verrà impostata la porta di default (1080)\e[0m"
+read SOCKSPORT
+if echo $SOCKSPORT | grep -Eoq '([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])'; then
+	echo -n
+else
+	echo 1080
+	SOCKSPORT=1080
+fi
+echo -e "\e[1;34m
+### Inserisci il nome dell'utente presente sul server su cui ci si vuole loggare (non inserire "root") e premi invio\e[0m"
+read SERVERUSERNAME
+echo -e "\e[1;34m
+### Inserisci il nome dell'host del server su cui ci si vuole loggare e premi invio
+Meramente informativo per una più facile identificazione del server, ma necessario per il montaggio tramite SSHFS\e[0m"
+read SERVERHOSTNAME
+echo -e "\e[1;34m
+### Inserisci il punto di mount del server, la cartella radice da cui verrà montato localmente il server tramite SSHFS e premi invio
+Nel dubbio, lascia il campo vuoto e premi invio, verrà impostato il percorso di default (/)\e[0m"
+read REMOTEMOUNTPOINT
+if echo $REMOTEMOUNTPOINT | grep -Eq '^(/[^/ ]*)+/?$'; then
+	echo -n
+else
+	echo /
+	REMOTEMOUNTPOINT=/
+fi
+while true
+do
+echo -e "\e[1;34m
+### Inserisci l'indirizzo ip del server per la connessione ssh e premi invio\e[0m"
+read SERVERIP
+if echo $SERVERIP | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'; then
+	break
+else
+	echo -e "\e[1;31m### Formato indirizzo IP non valido!...\e[0m"
+fi
+done
+if fping -r0 $SERVERIP | grep "alive"; then
+	PING="alive"
+fi
+if nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open"; then
+	PING="$SSHPORT/tcp open"
+fi
+
+SERVERIP_START_STEP=ping_serverip
+SERVERIP_STEP=manual_ssh
+echo -e "\e[1;34m
+### Connessione...\e[0m"
+ping_serverip
+}
+
 serverip_default(){
 if echo "$SERVERIP" | grep -x "$SERVERIP_LAN" | grep -Eoq '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'; then
 	serverip_lan
 elif echo "$SERVERIP" | grep -x "$SERVERIP_INTERNET" | grep -Eoq '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'; then
 	serverip_internet
 else
-	echo -e "\e[1;31mIndirizzo IP non corretto!
+	echo -e "\e[1;31mIndirizzo IP non valido!
 	\e[0m"
 	givemehelp
 fi
@@ -438,6 +513,7 @@ if echo $PING | grep -q "alive"; then
 elif echo $PING | grep -q "$SSHPORT/tcp open"; then
 	echo -n
 else
+	echo -e "\e[1;31m ## OFFLINE... \e[1;31mriprova...\e[0m"
 	$SERVERIP_STEP
 fi
 echo -e "\e[1;34m$SERVERUSERNAME@$SERVERHOSTNAME @ $SERVERIP ($TYPE) è\e[0m" "\e[1;32mONLINE\e[0m"
@@ -1436,7 +1512,7 @@ givemehelp(){
 echo "
 # ssh-servers
 
-# Version:    2.1.1
+# Version:    2.1.2
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -1473,27 +1549,25 @@ GUI - Con supporto alla GUI sul Client
 CLI - Con il solo supporto alla CLI
 
 È possibile utilizzare le seguenti opzioni:
---local	      Avvia una connessione ssh verso un server in ascolto all'interno della rete LAN
+--local	Avvia una connessione ssh verso un server in ascolto all'interno della rete LAN
 
---remote      Avvia una connessione ssh verso un server in ascolto su internet
+--remote	Avvia una connessione ssh verso un server in ascolto su internet
 
---manual      Imposta manualmente l'indirizzo ip del server ssh
+--manual	Imposta manualmente l'indirizzo ip del server ssh
 
---default     Avvia la connessione di default definita nel file di configurazione per questo server
+--ssh		Avvia una connessione ssh manuale. Equivale ad utilizzare ssh-client manualmente.
+
+--default	Avvia la connessione di default definita nel file di configurazione per questo server
 
 --config	Avvia la configurazione guidata
 
---help        Visualizza una descrizione ed opzioni di ssh-servers
+--help		Visualizza una descrizione ed opzioni di ssh-servers
 
 ### Nota
 Se i server ssh posseggono un indirizzo ip pubblico dinamico, consiglio fortemente (i due script si integrano a vicenda) di
 utilizzare [current-ip](https://github.com/KeyofBlueS/current-ip) sul lato server.
 "
 exit 0
-}
-
-general_error(){
- -e "\e[1;31m## ERRORE! Controlla il file di configurazione!\e[0m"
 }
 
 if [ "$1" = "--default" ]
@@ -1508,6 +1582,9 @@ then
 elif [ "$1" = "--manual" ]
 then
    serverip_manual
+elif [ "$1" = "--ssh" ]
+then
+   manual_ssh
 elif [ "$1" = "--help" ]
 then
    givemehelp
