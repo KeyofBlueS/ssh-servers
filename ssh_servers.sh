@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version:    2.0.3
+# Version:    2.1.0
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -22,7 +22,7 @@ done
 #SSHPORT=22
 #SOCKSPORT=1080
 #SERVERUSERNAME=user
-#SERVERNAME=HOST
+#SERVERHOSTNAME=HOST
 #REMOTEMOUNTPOINT=/
 #SERVERMAC=
 #SERVERIP_LAN=0.0.0.0
@@ -43,7 +43,7 @@ CURRENTIP="/dev/null"
 fi
 
 LOCALUSER=$USER
-LOCALMOUNTPOINT="/media/"$LOCALUSER"/"$SERVERNAME"_SSHFS"
+LOCALMOUNTPOINT="/media/"$LOCALUSER"/"$SERVERHOSTNAME"_SSHFS"
 
 LANCOUNTSTEP=serverip_error_countdown_$LAN_COUNTDOWN
 INTERNETCOUNTSTEP=serverip_error_countdown_$INTERNET_COUNTDOWN
@@ -52,15 +52,15 @@ READTIME="-t 1 -n 1"
 
 rm -f /tmp/$CURRENTIP_FILE.tmp
 
-if echo $AUDIO | grep -qx "BEEP"; then
+if echo $AUDIO | grep -Eq '^(BEEP|beep)$'; then
 	BELL1=( "beep" )
 	BELL2=( "beep -f 1000 -n -f 2000 -n -f 1500" )
 	BELL3=( "beep -f 2000" )
-elif echo $AUDIO | grep -qx "SOX"; then
+elif echo $AUDIO | grep -Eq '^(SOX|sox)$'; then
 	BELL1=( "play -q -n synth 0.2 square 1000 gain $GAIN fade h 0.01" )
 	BELL2=( "play -q -n synth 0.2 square 1000 gain $GAIN : synth 0.2 square 2000 gain $GAIN fade h 0.01 : synth 0.2 square 1500 gain $GAIN fade h 0.01" )
 	BELL3=( "play -q -n synth 0.2 square 2000 gain $GAIN fade h 0.01" )
-elif echo $AUDIO | grep -qx "NULL"; then
+elif echo $AUDIO | grep -Eq '^(NULL|null)$'; then
 	BELL0="echo BEEP"
 	BELL1="echo BEEP"
 	BELL2="echo BEEP"
@@ -68,6 +68,12 @@ else
 	BELL0="echo BEEP"
 	BELL1="echo BEEP"
 	BELL2="echo BEEP"
+fi
+
+if echo $SERVERIP | grep -Eq '^(LAN|lan)$'; then
+	SERVERIP=$SERVERIP_LAN
+elif echo $SERVERIP | grep -Eq '^(INTERNET|internet)$'; then
+	SERVERIP=$SERVERIP_INTERNET
 fi
 
 serverip_default(){
@@ -76,6 +82,8 @@ if echo "$SERVERIP" | grep -x "$SERVERIP_LAN" | grep -Eoq '(25[0-5]|2[0-4][0-9]|
 elif echo "$SERVERIP" | grep -x "$SERVERIP_INTERNET" | grep -Eoq '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'; then
 	serverip_internet
 else
+	echo -e "\e[1;31mIndirizzo IP non corretto!
+	\e[0m"
 	givemehelp
 fi
 }
@@ -83,7 +91,7 @@ fi
 menu0(){
 $BELL2
 echo -e "\e[1;34m
-## $SERVERUSERNAME@$SERVERNAME IP="$SERVERIP" Port=$SSHPORT\e[0m"
+## $SERVERUSERNAME@$SERVERHOSTNAME IP="$SERVERIP" Port=$SSHPORT\e[0m"
 echo -e "\e[1;31m
 Che tipo di collegamento vuoi effettuare?
 (L)ocale
@@ -123,7 +131,7 @@ esac
 serverip_manual(){
 $BELL1
 echo -e "\e[1;34m
-## $SERVERUSERNAME@$SERVERNAME\e[0m"
+## $SERVERUSERNAME@$SERVERHOSTNAME\e[0m"
 echo -e "\e[1;31mInserisci manualmente l'indirizzo IP del server\e[0m"
 unset ip; \
 while ! [ "$ip" ];do
@@ -298,7 +306,7 @@ serverip_error
 }
 serverip_error_countdown_exit(){
 echo -e "\e[1;34m
-$SERVERUSERNAME@$SERVERNAME @ $SERVERIP ($TYPE) non raggiungibile,
+$SERVERUSERNAME@$SERVERHOSTNAME @ $SERVERIP ($TYPE) non raggiungibile,
 è\e[0m" "\e[1;31mOFFLINE o rete non disponibile\e[0m"
 echo -e "\e[1;34mEsco dal programma\e[0m"
 exit 0
@@ -307,7 +315,7 @@ exit 0
 serverip_error(){
 clear
 echo -e "\e[1;34m
-$SERVERUSERNAME@$SERVERNAME @ $SERVERIP ($TYPE) non raggiungibile,
+$SERVERUSERNAME@$SERVERHOSTNAME @ $SERVERIP ($TYPE) non raggiungibile,
 è\e[0m" "\e[1;31mOFFLINE o rete non disponibile\e[0m"
 #	echo -e "\e[1;31mProvo a risvegliare il device...\e[0m"
 #	wakeonlan -i "$SERVERIP" $SERVERMAC
@@ -384,18 +392,19 @@ $SERVERIP_START_STEP
 
 ping_serverip(){
 echo -e "\e[1;34m
-## PING $SERVERUSERNAME@$SERVERNAME  IP=$SERVERIP Port=$SSHPORT
+## PING $SERVERUSERNAME@$SERVERHOSTNAME  IP=$SERVERIP Port=$SSHPORT
 \e[0m"
 $BELL1
 if echo $PING | grep -q "alive"; then
 	SERVERIP="$(fping -q -r0 -a $SERVERIP)"
-	menu
+	echo
 elif echo $PING | grep -q "$SSHPORT/tcp open"; then
-	echo -e "\e[1;34m$SERVERUSERNAME@$SERVERNAME @ $SERVERIP ($TYPE) è\e[0m" "\e[1;32mONLINE\e[0m"
-	menu
+	echo
 else
 	$SERVERIP_STEP
 fi
+echo -e "\e[1;34m$SERVERUSERNAME@$SERVERHOSTNAME @ $SERVERIP ($TYPE) è\e[0m" "\e[1;32mONLINE\e[0m"
+menu
 }
 
 menu(){
@@ -416,8 +425,15 @@ case $testo in
     S|s)
 	{
 	clear
+	echo $SOCKSPORT | grep -Eoq '([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])'
+	if [ $? = 0 ]; then
+		echo
+	else
+		echo -e "\e[1;31mPorta SOCKS non corretta, imposto quella di default (1080)\e[0m"
+		SOCKSPORT=1080
+	fi
 	echo -e "\e[1;34m
-	## SSH $SERVERUSERNAME@$SERVERNAME SOCKS
+	## SSH $SERVERUSERNAME@$SERVERHOSTNAME SOCKS
 	\e[0m"
 	$BELL3
 	ssh -i "$KEYFILE" -ND $SOCKSPORT -p $SSHPORT $SERVERUSERNAME@$SERVERIP
@@ -428,7 +444,7 @@ case $testo in
 	{
 	clear
 	echo -e "\e[1;34m
-## SSH $SERVERUSERNAME@$SERVERNAME SSHFS
+## SSH $SERVERUSERNAME@$SERVERHOSTNAME SSHFS
 \e[0m"
 	$BELL3
 	fusermount -u "$LOCALMOUNTPOINT"
@@ -443,7 +459,7 @@ case $testo in
 	{
 	clear
 	echo -e "\e[1;34m
-## SSH $SERVERUSERNAME@$SERVERNAME GUI
+## SSH $SERVERUSERNAME@$SERVERHOSTNAME GUI
 \e[0m"
 	$BELL3
 	ssh -i "$KEYFILE" -X -p $SSHPORT $SERVERUSERNAME@$SERVERIP
@@ -454,7 +470,7 @@ case $testo in
 	{
 	clear
 	echo -e "\e[1;34m
-## SSH $SERVERUSERNAME@$SERVERNAME CLI
+## SSH $SERVERUSERNAME@$SERVERHOSTNAME CLI
 \e[0m"
 	$BELL3
 	ssh -i "$KEYFILE" -p $SSHPORT $SERVERUSERNAME@$SERVERIP
@@ -475,11 +491,915 @@ case $testo in
 esac
 }
 
+###############################################################################################################################################
+
+create_configuration_file(){
+CHECK="no"
+echo -e '\e[1;34m### Creazione guidata file di configurazione per ssh-servers
+
+Per una spiegazione più dettagliata vedi https://github.com/KeyofBlueS/ssh-servers/blob/master/Esempio-configurazione-ssh-server.sh\e[0m'
+configuration_currentip_link
+}
+
+configuration_currentip_link(){
+echo -e "\e[1;34m
+### Inserisci l'URL del file contenente le informazioni del server remoto e premi invio
+(vedi https://github.com/KeyofBlueS/current-ip)
+Se il file non è disponibile o nel dubbio, lascia il campo vuoto e premi invio\e[0m"
+read currentip_link_userinput
+echo -e "\e[1;34m-> \e[1;32m$currentip_link_userinput\e[0m"
+echo $CHECK | grep -xq "yes"
+if [ $? != 0 ]; then
+	configuration_currentip_path
+else
+	configuration_configuration_file_check
+fi
+}
+
+configuration_currentip_path(){
+echo -e "\e[1;34m
+### Inserisci il percorso locale in cui è presente il file contenente le informazioni del server remoto e premi invio
+(vedi https://github.com/KeyofBlueS/current-ip)
+Se il file non è disponibile o nel dubbio, lascia il campo vuoto, premi invio e continua comunque\e[0m"
+read currentip_path_userinput
+echo -e "\e[1;34m-> \e[1;32m$currentip_path_userinput\e[0m"
+if echo $currentip_path_userinput | grep -Eq '^".*"$'; then
+	eval currentip_path_userinput=$currentip_path_userinput
+else
+	eval currentip_path_userinput='"'$currentip_path_userinput'"'
+fi
+test -d "$currentip_path_userinput"
+if [ $? = 0 ]; then
+	echo ok
+else
+#	ERRORTEXT="Il percorso "$currentip_path_userinput" non esiste! Vuoi crearlo?"
+	ERRORTEXT="Il percorso "$currentip_path_userinput" non esiste! Vuoi continuare comunque?"
+	CONFIGURATION_CURRENT_STEP=configuration_currentip_path
+#	YESCOMMAND=( "mkdir -p "$currentip_path_userinput"" )
+	YESCOMMAND=( "" )
+	echo $CHECK | grep -xq "yes"
+	if [ $? != 0 ]; then
+		CONFIGURATION_NEXT_STEP=configuration_currentip_file
+	else
+		CONFIGURATION_NEXT_STEP=configuration_configuration_file_check
+	fi
+	userimput_error
+fi
+echo $CHECK | grep -xq "yes"
+if [ $? != 0 ]; then
+	configuration_currentip_file
+else
+	configuration_configuration_file_check
+fi
+}
+
+configuration_currentip_file(){
+echo -e "\e[1;34m
+### Inserisci il nome del file contenente le informazioni del server remoto e premi invio
+(vedi https://github.com/KeyofBlueS/current-ip)
+Se il file non è disponibile o nel dubbio, lascia il campo vuoto e premi invio\e[0m"
+read currentip_file_userinput
+echo -e "\e[1;34m-> \e[1;32m$currentip_file_userinput\e[0m"
+if echo $currentip_file_userinput | grep -Eq '^".*"$'; then
+	eval currentip_file_userinput=$currentip_file_userinput
+else
+	eval currentip_file_userinput='"'$currentip_file_userinput'"'
+fi
+test -e "$currentip_path_userinput/$currentip_file_userinput"
+if [ $? = 0 ]; then
+	echo ok
+else
+	ERRORTEXT="Nel percorso "$currentip_path_userinput" il file "$currentip_file_userinput" non esiste! Vuoi continuare comunque?"
+	CONFIGURATION_CURRENT_STEP=configuration_currentip_file
+	YESCOMMAND=( "" )
+	echo $CHECK | grep -xq "yes"
+	if [ $? != 0 ]; then
+		CONFIGURATION_NEXT_STEP=configuration_keyfile
+	else
+		CONFIGURATION_NEXT_STEP=configuration_configuration_file_check
+	fi
+	userimput_error
+fi
+echo $CHECK | grep -xq "yes"
+if [ $? != 0 ]; then
+	configuration_keyfile
+else
+	configuration_configuration_file_check
+fi
+}
+
+configuration_keyfile(){
+echo -e "\e[1;34m
+### Inserisci il percorso del file chiave, richiesto per il collegamento tramite key authtentication, e premi invio
+Se il file non è disponibile o nel dubbio, lascia il campo vuoto, premi invio e continua comunque\e[0m"
+read keyfile_userinput
+echo -e "\e[1;34m-> \e[1;32m$keyfile_userinput\e[0m"
+if echo $keyfile_userinput | grep -Eq '^".*"$'; then
+	eval keyfile_userinput=$keyfile_userinput
+else
+	eval keyfile_userinput='"'$keyfile_userinput'"'
+fi
+test -e "$keyfile_userinput"
+if [ $? = 0 ]; then
+	echo ok
+else
+	ERRORTEXT="Il file "$keyfile_userinput" non esiste! Vuoi continuare comunque?"
+	CONFIGURATION_CURRENT_STEP=configuration_keyfile
+	YESCOMMAND=( "" )
+	echo $CHECK | grep -xq "yes"
+	if [ $? != 0 ]; then
+		CONFIGURATION_NEXT_STEP=configuration_sshport
+	else
+		CONFIGURATION_NEXT_STEP=configuration_configuration_file_check
+	fi
+	userimput_error
+fi
+echo $CHECK | grep -xq "yes"
+if [ $? != 0 ]; then
+	configuration_sshport
+else
+	configuration_configuration_file_check
+fi
+}
+
+configuration_sshport(){
+echo -e "\e[1;34m
+### Inserisci la porta in ascolto del server ssh e premi invio
+Nel dubbio, inserisci la porta di default (22) e premi invio\e[0m"
+read sshport_userinput
+echo -e "\e[1;34m-> \e[1;32m$sshport_userinput\e[0m"
+echo "$sshport_userinput" | grep -Eoq '^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$'
+if [ $? = 0 ]; then
+	echo ok
+else
+	ERRORTEXT="La porta ssh "$sshport_userinput" non è valida! Vuoi continuare comunque?"
+	CONFIGURATION_CURRENT_STEP=configuration_sshport
+	YESCOMMAND=( "" )
+	echo $CHECK | grep -xq "yes"
+	if [ $? != 0 ]; then
+		CONFIGURATION_NEXT_STEP=configuration_socksport
+	else
+		CONFIGURATION_NEXT_STEP=configuration_configuration_file_check
+	fi
+	userimput_error
+fi
+echo $CHECK | grep -xq "yes"
+if [ $? != 0 ]; then
+	configuration_socksport
+else
+	configuration_configuration_file_check
+fi
+}
+
+configuration_socksport(){
+echo -e "\e[1;34m
+### Inserisci la porta in cui avviare un Server SOCKS per condividere la connessione del server sul client e premi invio
+Nel dubbio, inserisci la porta di default (1080) e premi invio\e[0m"
+read socksport_userinput
+echo -e "\e[1;34m-> \e[1;32m$socksport_userinput\e[0m"
+echo "$socksport_userinput" | grep -Eoq '^([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$'
+if [ $? = 0 ]; then
+	echo ok
+else
+	ERRORTEXT="La porta SOCKS "$socksport_userinput" non è valida! Vuoi continuare comunque?"
+	CONFIGURATION_CURRENT_STEP=configuration_socksport
+	YESCOMMAND=( "" )
+	echo $CHECK | grep -xq "yes"
+	if [ $? != 0 ]; then
+		CONFIGURATION_NEXT_STEP=configuration_serverusername
+	else
+		CONFIGURATION_NEXT_STEP=configuration_configuration_file_check
+	fi
+	userimput_error
+fi
+echo $CHECK | grep -xq "yes"
+if [ $? != 0 ]; then
+	configuration_serverusername
+else
+	configuration_configuration_file_check
+fi
+}
+
+configuration_serverusername(){
+echo -e "\e[1;34m
+### Inserisci il nome dell'utente presente sul server su cui ci si vuole loggare (non inserire "root") e premi invio\e[0m"
+read serverusername_userinput
+echo -e "\e[1;34m-> \e[1;32m$serverusername_userinput\e[0m"
+echo "$serverusername_userinput" | grep -Eq '^[a-z_]([a-z0-9_-]{0,31}|[a-z0-9_-]{0,30}\$)$'
+if [ $? = 0 ]; then
+	echo ok
+else
+	ERRORTEXT="Il formato del nome utente "$serverusername_userinput" non è valido! Vuoi continuare comunque?"
+	CONFIGURATION_CURRENT_STEP=configuration_serverusername
+	YESCOMMAND=( "" )
+	echo $CHECK | grep -xq "yes"
+	if [ $? != 0 ]; then
+		CONFIGURATION_NEXT_STEP=configuration_serverhostname
+	else
+		CONFIGURATION_NEXT_STEP=configuration_configuration_file_check
+	fi
+	userimput_error
+fi
+echo $CHECK | grep -xq "yes"
+if [ $? != 0 ]; then
+	configuration_serverhostname
+else
+	configuration_configuration_file_check
+fi
+}
+ ##################################
+configuration_serverhostname(){
+echo -e "\e[1;34m
+### Inserisci il nome dell'host del server su cui ci si vuole loggare e premi invio
+Meramente informativo per una più facile identificazione del server, ma necessario per il montaggio tramite SSHFS\e[0m"
+read serverhostname_userinput
+echo -e "\e[1;34m-> \e[1;32m$serverhostname_userinput\e[0m"
+echo $CHECK | grep -xq "yes"
+if [ $? != 0 ]; then
+	configuration_remotemountpoint
+else
+	configuration_configuration_file_check
+fi
+}
+
+configuration_remotemountpoint(){
+echo -e "\e[1;34m
+### Inserisci il punto di mount del server, la cartella radice da cui verrà montato localmente il server tramite SSHFS e premi invio
+Nel dubbio, inserisci il percorso root (/) e premi invio\e[0m"
+read remotemountpoint_userinput
+echo -e "\e[1;34m-> \e[1;32m$remotemountpoint_userinput\e[0m"
+if echo $remotemountpoint_userinput | grep -Eq '^".*"$'; then
+	eval remotemountpoint_userinput=$remotemountpoint_userinput
+else
+	eval remotemountpoint_userinput='"'$remotemountpoint_userinput'"'
+fi
+echo $remotemountpoint_userinput | grep -Eq '^(/[^/ ]*)+/?$'
+if [ $? = 0 ]; then
+	echo ok
+else
+	ERRORTEXT=""$remotemountpoint_userinput" non è un percorso valido! Vuoi continuare comunque?"
+	CONFIGURATION_CURRENT_STEP=configuration_remotemountpoint
+	YESCOMMAND=( "" )
+	echo $CHECK | grep -xq "yes"
+	if [ $? != 0 ]; then
+		CONFIGURATION_NEXT_STEP=configuration_servermac
+	else
+		CONFIGURATION_NEXT_STEP=configuration_configuration_file_check
+	fi
+	userimput_error
+fi
+echo $CHECK | grep -xq "yes"
+if [ $? != 0 ]; then
+	configuration_servermac
+else
+	configuration_configuration_file_check
+fi
+}
+ ##################################
+configuration_servermac(){
+echo -e "\e[1;34m
+### Inserisci l'indirizzo MAC del server, richiesto per provare a risvegliare il server tramite Wake On LAN e premi invio
+Nel dubbio, lascia il campo vuoto, premi invio e continua comunque\e[0m"
+read servermac_userinput
+echo -e "\e[1;34m-> \e[1;32m$servermac_userinput\e[0m"
+if echo $servermac_userinput | grep -Eq '^".*"$'; then
+	eval servermac_userinput=$servermac_userinput
+else
+	eval servermac_userinput='"'$servermac_userinput'"'
+fi
+echo "$servermac_userinput" | grep -Eoq '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'
+if [ $? = 0 ]; then
+	echo ok
+else
+	ERRORTEXT="L'indirizzo MAC "$servermac_userinput" non è valido! Vuoi continuare comunque?"
+	CONFIGURATION_CURRENT_STEP=configuration_servermac
+	YESCOMMAND=( "" )
+	echo $CHECK | grep -xq "yes"
+	if [ $? != 0 ]; then
+		CONFIGURATION_NEXT_STEP=configuration_serverip_lan
+	else
+		CONFIGURATION_NEXT_STEP=configuration_configuration_file_check
+	fi
+	userimput_error
+fi
+echo $CHECK | grep -xq "yes"
+if [ $? != 0 ]; then
+	configuration_serverip_lan
+else
+	configuration_configuration_file_check
+fi
+}
+
+configuration_serverip_lan(){
+echo -e "\e[1;34m
+### Inserisci l'indirizzo ip del server per la connessione ssh in rete locale e premi invio\e[0m"
+read serverip_lan_userinput
+echo -e "\e[1;34m-> \e[1;32m$serverip_lan_userinput\e[0m"
+if echo $serverip_lan_userinput | grep -Eq '^".*"$'; then
+	eval serverip_lan_userinput=$serverip_lan_userinput
+else
+	eval serverip_lan_userinput='"'$serverip_lan_userinput'"'
+fi
+echo "$serverip_lan_userinput" | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'
+if [ $? = 0 ]; then
+	echo ok
+else
+	ERRORTEXT="L'indirizzo IP "$serverip_lan_userinput" non è valido! Vuoi continuare comunque?"
+	CONFIGURATION_CURRENT_STEP=configuration_serverip_lan
+	YESCOMMAND=( "" )
+	echo $CHECK | grep -xq "yes"
+	if [ $? != 0 ]; then
+		CONFIGURATION_NEXT_STEP=configuration_lan_countdown
+	else
+		CONFIGURATION_NEXT_STEP=configuration_configuration_file_check
+	fi
+	userimput_error
+fi
+echo $CHECK | grep -xq "yes"
+if [ $? != 0 ]; then
+	configuration_lan_countdown
+else
+	configuration_configuration_file_check
+fi
+}
+
+configuration_lan_countdown(){
+echo -e "\e[1;34m
+### Secondi di attesa prima di provare a ricontattare il server nella rete locale nel caso questo fosse irraggiungibile, inserisci:
+un valore da 0 a 10	- durante il countdown viene comunque chiesto all'utente come proseguire
+ask	- per non riprovare automaticamente, viene chiesto all'utente come proseguire
+exit	- per non riprovare automaticamente ed uscire dallo script
+e premi invio\e[0m"
+read lan_countdown_userinput
+echo -e "\e[1;34m-> \e[1;32m$lan_countdown_userinput\e[0m"
+echo "$lan_countdown_userinput" | grep -Eq '^([0-9]|10|ask|exit)$'
+if [ $? = 0 ]; then
+	echo ok
+else
+	ERRORTEXT="L'impostazione inserita ("$lan_countdown_userinput") non è valida! Vuoi continuare comunque?"
+	CONFIGURATION_CURRENT_STEP=configuration_lan_countdown
+	YESCOMMAND=( "" )
+	echo $CHECK | grep -xq "yes"
+	if [ $? != 0 ]; then
+		CONFIGURATION_NEXT_STEP=configuration_serverip_internet
+	else
+		CONFIGURATION_NEXT_STEP=configuration_configuration_file_check
+	fi
+	userimput_error
+fi
+echo $CHECK | grep -xq "yes"
+if [ $? != 0 ]; then
+	configuration_serverip_internet
+else
+	configuration_configuration_file_check
+fi
+}
+
+configuration_serverip_internet(){
+echo -e "\e[1;34m
+### Inserisci l'indirizzo ip del server per la connessione ssh in remoto e premi invio\e[0m"
+read serverip_internet_userinput
+echo -e "\e[1;34m-> \e[1;32m$serverip_internet_userinput\e[0m"
+if echo $serverip_internet_userinput | grep -Eq '^".*"$'; then
+	eval serverip_internet_userinput=$serverip_internet_userinput
+else
+	eval serverip_internet_userinput='"'$serverip_internet_userinput'"'
+fi
+echo "$serverip_internet_userinput" | grep -E -o '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'
+if [ $? = 0 ]; then
+	echo ok
+else
+	ERRORTEXT="L'indirizzo IP "$serverip_internet_userinput" non è valido! Vuoi continuare comunque?"
+	CONFIGURATION_CURRENT_STEP=configuration_serverip_internet
+	YESCOMMAND=( "" )
+	echo $CHECK | grep -xq "yes"
+	if [ $? != 0 ]; then
+		CONFIGURATION_NEXT_STEP=configuration_internet_countdown
+	else
+		CONFIGURATION_NEXT_STEP=configuration_configuration_file_check
+	fi
+	userimput_error
+fi
+echo $CHECK | grep -xq "yes"
+if [ $? != 0 ]; then
+	configuration_internet_countdown
+else
+	configuration_configuration_file_check
+fi
+}
+
+configuration_internet_countdown(){
+echo -e "\e[1;34m
+### Secondi di attesa prima di provare a ricontattare il server su internet nel caso questo fosse irraggiungibile, inserisci:
+un valore da 0 a 10	- durante il countdown viene comunque chiesto all'utente come proseguire
+ask	- per non riprovare automaticamente, viene chiesto all'utente come proseguire
+exit	- per non riprovare automaticamente ed uscire dallo script
+e premi invio\e[0m"
+read internet_countdown_userinput
+echo -e "\e[1;34m-> \e[1;32m$internet_countdown_userinput\e[0m"
+echo "$internet_countdown_userinput" | grep -Eq '^([0-9]|10|ask|exit)$'
+if [ $? = 0 ]; then
+	echo ok
+else
+	ERRORTEXT="L'impostazione inserita ("$internet_countdown_userinput") non è valida! Vuoi continuare comunque?"
+	CONFIGURATION_CURRENT_STEP=configuration_internet_countdown
+	YESCOMMAND=( "" )
+	echo $CHECK | grep -xq "yes"
+	if [ $? != 0 ]; then
+		CONFIGURATION_NEXT_STEP=configuration_serverip
+	else
+		CONFIGURATION_NEXT_STEP=configuration_configuration_file_check
+	fi
+	userimput_error
+fi
+echo $CHECK | grep -xq "yes"
+if [ $? != 0 ]; then
+	configuration_serverip
+else
+	configuration_configuration_file_check
+fi
+}
+
+configuration_serverip(){
+echo -e "\e[1;34m
+### Imposta il tipo di collegamento preferito, inserisci:
+LAN	- se il server si trova all'interno della rete locale
+INTERNET	- se il server si trova su internet
+e premi invio\e[0m"
+read serverip_userinput
+echo -e "\e[1;34m-> \e[1;32m$serverip_userinput\e[0m"
+echo "$serverip_userinput" | grep -Eq '^(LAN|INTERNET)$'
+if [ $? = 0 ]; then
+	echo ok
+elif echo "$serverip_userinput" | grep -xq 'lan'; then
+	serverip_userinput=LAN
+elif echo "$serverip_userinput" | grep -xq 'internet'; then
+	serverip_userinput=INTERNET
+else
+	ERRORTEXT="L'impostazione inserita ("$serverip_userinput") non è corretta! Vuoi continuare comunque?"
+	CONFIGURATION_CURRENT_STEP=configuration_serverip
+	YESCOMMAND=( "" )
+	echo $CHECK | grep -xq "yes"
+	if [ $? != 0 ]; then
+		CONFIGURATION_NEXT_STEP=configuration_audio
+	else
+		CONFIGURATION_NEXT_STEP=configuration_configuration_file_check
+	fi
+	userimput_error
+fi
+echo $CHECK | grep -xq "yes"
+if [ $? != 0 ]; then
+	configuration_audio
+else
+	configuration_configuration_file_check
+fi
+}
+
+configuration_audio(){
+echo -e "\e[1;34m
+### Imposta il tipo di segnale acustico da utilizzare, inserisci:
+BEEP	- per impostare il segnale acustico tramite lo speaker interno (richiede beep)
+SOX	- per impostare il segnale acustico tramite la scheda audio (richiede sox)
+NULL	- per disattivare il segnale acustico
+e premi invio\e[0m"
+read audio_userinput
+echo -e "\e[1;34m-> \e[1;32m$audio_userinput\e[0m"
+echo "$audio_userinput" | grep -Eq '^(BEEP|SOX|NULL)$'
+if [ $? = 0 ]; then
+	echo ok
+elif echo "$audio_userinput" | grep -xq 'beep'; then
+	audio_userinput=BEEP
+elif echo "$audio_userinput" | grep -xq 'sox'; then
+	audio_userinput=SOX
+elif echo "$audio_userinput" | grep -xq 'null'; then
+	audio_userinput=NULL
+else
+	ERRORTEXT="L'impostazione inserita ("$audio_userinput") non è corretta! Vuoi continuare comunque?"
+	CONFIGURATION_CURRENT_STEP=configuration_audio
+	YESCOMMAND=( "" )
+	echo $CHECK | grep -xq "yes"
+	if [ $? != 0 ]; then
+		CONFIGURATION_NEXT_STEP=configuration_gain
+	else
+		CONFIGURATION_NEXT_STEP=configuration_configuration_file_check
+	fi
+	userimput_error
+fi
+echo $CHECK | grep -xq "yes"
+if [ $? != 0 ]; then
+	configuration_gain
+else
+	configuration_configuration_file_check
+fi
+}
+ ##################################
+configuration_gain(){
+echo -e "\e[1;34m
+### Regola il volume delle segnalazioni acustiche per SOX e premi invio
+Inserisci qualsiasi valore negativo o positivo es -20, 0, 10, +20\e[0m"
+read gain_userinput
+echo -e "\e[1;34m-> \e[1;32m$gain_userinput\e[0m"
+if echo "$gain_userinput" | grep -Eq '^[+]?[0-9]+$'; then
+	echo ok
+elif echo "$gain_userinput" | grep -Eq '^-[0-9]+$'; then
+	echo ok
+else
+	ERRORTEXT="L'impostazione inserita ("$gain_userinput") non è corretta! Vuoi continuare comunque?"
+	CONFIGURATION_CURRENT_STEP=configuration_gain
+	YESCOMMAND=( "" )
+	echo $CHECK | grep -xq "yes"
+	if [ $? != 0 ]; then
+		CONFIGURATION_NEXT_STEP=configuration_configuration_file_check
+	else
+		CONFIGURATION_NEXT_STEP=configuration_configuration_file_check
+	fi
+	userimput_error
+fi
+echo $CHECK | grep -xq "yes"
+if [ $? != 0 ]; then
+	configuration_configuration_file_check
+else
+	configuration_configuration_file_check
+fi
+}
+
+configuration_configuration_file_check(){
+CHECK="yes"
+while true
+do
+
+if echo $currentip_path_userinput | grep -q " "; then
+	if echo $currentip_path_userinput | grep -Eq '^".*"$'; then
+		echo
+	else
+		currentip_path_userinput='"'$currentip_path_userinput'"'
+	fi
+else
+	echo
+fi
+
+if echo $currentip_file_userinput | grep -q " "; then
+	if echo $currentip_file_userinput | grep -Eq '^".*"$'; then
+		echo
+	else
+		currentip_file_userinput='"'$currentip_file_userinput'"'
+	fi
+else
+	echo
+fi
+
+if echo $keyfile_userinput | grep -q " "; then
+	if echo $keyfile_userinput | grep -Eq '^".*"$'; then
+		echo
+	else
+		keyfile_userinput='"'$keyfile_userinput'"'
+	fi
+else
+	echo
+fi
+
+if echo $remotemountpoint_userinput | grep -q " "; then
+	if echo $remotemountpoint_userinput | grep -Eq '^".*"$'; then
+		echo
+	else
+		remotemountpoint_userinput='"'$remotemountpoint_userinput'"'
+	fi
+else
+	echo
+fi
+
+if echo $servermac_userinput | grep -q " "; then
+	if echo $servermac_userinput | grep -Eq '^".*"$'; then
+		echo
+	else
+		servermac_userinput='"'$servermac_userinput'"'
+	fi
+else
+	echo
+fi
+
+if echo $serverip_lan_userinput | grep -q " "; then
+	if echo $serverip_lan_userinput | grep -Eq '^".*"$'; then
+		echo
+	else
+		serverip_lan_userinput='"'$serverip_lan_userinput'"'
+	fi
+else
+	echo
+fi
+
+if echo $serverip_internet_userinput | grep -q " "; then
+	if echo $serverip_internet_userinput | grep -Eq '^".*"$'; then
+		echo
+	else
+		serverip_internet_userinput='"'$serverip_internet_userinput'"'
+	fi
+else
+	echo
+fi
+
+echo -e "\e[1;31m
+### Configurazione terminata.
+Vuoi modificare qualcosa o procedere con il salvataggio?\e[1;34m
+
+Il contenuto del file di configurazione è:
+
+(1)  - export CURRENTIP_LINK=$currentip_link_userinput
+(2)  - export CURRENTIP_PATH=$currentip_path_userinput
+(3)  - export CURRENTIP_FILE=$currentip_file_userinput
+(4)  - export KEYFILE=$keyfile_userinput
+(5)  - export SSHPORT=$sshport_userinput
+(6)  - export SOCKSPORT=$socksport_userinput
+(7)  - export SERVERUSERNAME=$serverusername_userinput
+(8)  - export SERVERHOSTNAME=$serverhostname_userinput
+(9)  - export REMOTEMOUNTPOINT=$remotemountpoint_userinput
+(10) - export SERVEMAC=$servermac_userinput
+(11) - export SERVERIP_LAN=$serverip_lan_userinput
+(12) - export LAN_COUNTDOWN=$lan_countdown_userinput
+(13) - export SERVERIP_INTERNET=$serverip_internet_userinput
+(14) - export INTERNET_COUNTDOWN=$internet_countdown_userinput
+(15) - export SERVERIP=$serverip_userinput
+(16) - export AUDIO=$audio_userinput
+(17) - export GAIN=$gain_userinput
+(S)alva
+(R)icomincia
+(E)sci dal programma
+\e[0m"
+read -p "Scelta (1-17/S/R/E): " testo
+
+case $testo in
+    1)
+	{
+	configuration_currentip_link
+	}
+    ;;
+    2)
+	{
+	configuration_currentip_path
+	}
+    ;;
+    3)
+	{
+	configuration_currentip_file
+	}
+    ;;
+    4)
+	{
+	configuration_keyfile
+	}
+    ;;
+    5)
+	{
+	configuration_sshport
+	}
+    ;;
+    6)
+	{
+	configuration_socksport
+	}
+    ;;
+    7)
+	{
+	configuration_serverusername
+	}
+    ;;
+    8)
+	{
+	configuration_serverhostname
+	}
+    ;;
+    9)
+	{
+	configuration_remotemountpoint
+	}
+    ;;
+    10)
+	{
+	configuration_servermac
+	}
+    ;;
+    11)
+	{
+	configuration_serverip_lan
+	}
+    ;;
+    12)
+	{
+	configuration_lan_countdown
+	}
+    ;;
+    13)
+	{
+	configuration_serverip_internet
+	}
+    ;;
+    14)
+	{
+	configuration_internet_countdown
+	}
+    ;;
+    15)
+	{
+	configuration_serverip
+	}
+    ;;
+    16)
+	{
+	configuration_audio
+	}
+    ;;
+    17)
+	{
+	configuration_gain
+	}
+    ;;
+    S|s)
+	{
+	echo -e "\e[1;34m
+## CONTINUO...\e[0m"
+	configuration_configuration_path
+	}
+    ;;
+    R|r)
+	{
+	echo -e "\e[1;34m
+## RICOMINCIA...\e[0m"
+	create_configuration_file
+	}
+    ;;
+    E|e)
+	{
+	echo -e "\e[1;34mEsco dal programma\e[0m"
+	exit 0
+	}
+    ;;
+    *)
+	echo -e "\e[1;31m## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m"
+    ;;
+esac
+done
+}
+
+configuration_configuration_path(){
+CHECK="no"
+echo -e "\e[1;34m
+### Inserisci il percorso in cui verrà salvato questo file di configurazione e premi invio
+es. $HOME/ssh-servers\e[0m"
+read configuration_path_userinput
+echo -e "\e[1;34m-> \e[1;32m$configuration_path_userinput\e[0m"
+if echo $configuration_path_userinput | grep -Eq '^".*"$'; then
+	eval configuration_path_userinput=$configuration_path_userinput
+else
+	eval configuration_path_userinput='"'$configuration_path_userinput'"'
+fi
+test -d "$configuration_path_userinput"
+if [ $? = 0 ]; then
+	echo ok
+else
+	ERRORTEXT="Il percorso "$configuration_path_userinput" non esiste. Vuoi crearlo?"
+	CONFIGURATION_CURRENT_STEP=configuration_configuration_path
+	CONFIGURATION_NEXT_STEP=configuration_configuration_file
+	YESCOMMAND=( mk_configuration_path )
+	userimput_error
+fi
+configuration_configuration_file
+}
+
+mk_configuration_path(){
+mkdir -p "$configuration_path_userinput"
+if [ $? = 0 ]; then
+	echo ok
+	configuration_configuration_file
+else
+	echo -e "\e[1;31m### Errore durante la creazione del percorso!\e[0m"
+	configuration_configuration_path
+fi
+}
+
+configuration_configuration_file(){
+echo -e "\e[1;34m
+### Inserisci il nome per questo file di configurazione e premi invio
+es. "$serverusername_userinput"-"$serverhostname_userinput"\e[0m"
+read configuration_file_userinput
+echo -e "\e[1;34m-> \e[1;32m$configuration_file_userinput\e[0m"
+if echo $configuration_path_userinput | grep -Eq '^".*"$'; then
+	eval configuration_file_userinput=$configuration_file_userinput
+else
+	eval configuration_file_userinput='"'$configuration_file_userinput'"'
+fi
+test -e "$configuration_path_userinput/$configuration_file_userinput.sh"
+if [ $? != 0 ]; then
+	echo ok
+else
+	ERRORTEXT="Il file "$configuration_path_userinput/$configuration_file_userinput.sh" è già esistente! Vuoi sovrascriverlo?"
+	CONFIGURATION_CURRENT_STEP=configuration_configuration_file
+	CONFIGURATION_NEXT_STEP=configuration_configuration_file_save
+	YESCOMMAND=( "" )
+	userimput_error
+fi
+configuration_configuration_file_save
+}
+
+configuration_configuration_file_save(){
+echo -e "\e[1;34m
+### Salvataggio in corso...\e[0m"
+touch "$configuration_path_userinput/$configuration_file_userinput.sh"
+
+SSHSERVERS="$""@"
+SAVEFILE=""$configuration_path_userinput"/"$configuration_file_userinput".sh"
+
+cat <<EOT > $SAVEFILE
+#!/bin/bash
+
+export CURRENTIP_LINK=$currentip_link_userinput
+export CURRENTIP_PATH=$currentip_path_userinput
+export CURRENTIP_FILE=$currentip_file_userinput
+export KEYFILE=$keyfile_userinput
+export SSHPORT=$sshport_userinput
+export SOCKSPORT=$socksport_userinput
+export SERVERUSERNAME=$serverusername_userinput
+export SERVERHOSTNAME=$serverhostname_userinput
+export REMOTEMOUNTPOINT=$remotemountpoint_userinput
+export SERVEMAC=$servermac_userinput
+export SERVERIP_LAN=$serverip_lan_userinput
+export LAN_COUNTDOWN=$lan_countdown_userinput
+export SERVERIP_INTERNET=$serverip_internet_userinput
+export INTERNET_COUNTDOWN=$internet_countdown_userinput
+export SERVERIP=$serverip_userinput
+export AUDIO=$audio_userinput
+export GAIN=$gain_userinput
+
+ssh-servers $SSHSERVERS
+EOT
+
+if [ $? = 0 ]; then
+	echo ok
+	chmod +x "$SAVEFILE"
+else
+	echo -e "\e[1;31m## ERRORE!\e[0m"
+	configuration_configuration_path
+fi
+
+echo -e "\e[1;34m
+### Il file di configurazione è stato correttamente salvato in "$SAVEFILE"
+
+- Puoi modificarlo manualmente con en editor di testo, ad esempio nano, digitando:
+
+\e[1;32m$ nano "$SAVEFILE"
+
+
+\e[1;34m- Puoi avviarlo digitando:
+
+\e[1;32m$ "$SAVEFILE"
+\e[0m"
+
+exit 0
+}
+
+userimput_error(){
+while true
+do
+	echo -e "\e[1;31m$ERRORTEXT\e[0m"
+echo -e "\e[1;31m(S)i
+(R)iprova
+(E)sci dal programma
+\e[0m"
+read -p "Scelta (S/R/E): " testo
+
+case $testo in
+    S|s)
+	{
+	echo -e "\e[1;34m
+## CONTINUO...\e[0m"
+	$YESCOMMAND
+	$CONFIGURATION_NEXT_STEP
+	}
+    ;;
+    R|r)
+	{
+	echo -e "\e[1;34m
+## RIPROVA...\e[0m"
+	$CONFIGURATION_CURRENT_STEP
+	}
+    ;;
+    E|e)
+	{
+	echo -e "\e[1;34mEsco dal programma\e[0m"
+	exit 0
+	}
+    ;;
+    *)
+	echo -e "\e[1;31m## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m"
+    ;;
+esac
+done
+}
+
 givemehelp(){
 echo "
 # ssh-servers
 
-# Version:    2.0.3
+# Version:    2.1.0
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -490,8 +1410,11 @@ file di configurazione personalizzati e grazie a menu interattivi.
 
 ### CONFIGURAZIONE
 Questo script non può essere utilizzato così com'è, ma deve essere necessariamente richiamato da un altro script/file di configurazione
-che dovrà essere compilato in maniera precisa. L'esempio dello script/file di configurazione
-https://github.com/KeyofBlueS/ssh-servers/blob/master/Esempio-configurazione-ssh-server.sh
+che dovrà essere compilato in maniera precisa.
+Per avviare la configurazione guidata, su un terminale digitare:
+$ "'"ssh-servers --config"'"
+
+L'esempio dello script/file di configurazione https://github.com/KeyofBlueS/ssh-servers/blob/master/Esempio-configurazione-ssh-server.sh
 è commentato in modo esaustivo, basatevi su quello.
 Una volta compilato e salvato lo script di configurazione, deve essere reso eseguibile, quindi se ad esempio il nostro script di
 configurazione si chiama "'"mario-rossi-ssh-server.sh"'" e si trova nel percorso "'"$HOME/ssh-servers/"'", dovremo dare il comando:
@@ -521,6 +1444,8 @@ CLI - Con il solo supporto alla CLI
 
 --default     Avvia la connessione di default definita nel file di configurazione per questo server
 
+--config	Avvia la configurazione guidata
+
 --help        Visualizza una descrizione ed opzioni di ssh-servers
 
 ### Nota
@@ -548,6 +1473,9 @@ then
 elif [ "$1" = "" ]
 then
    serverip_default
+elif [ "$1" = "--config" ]
+then
+   create_configuration_file
 else
    givemehelp
 fi
