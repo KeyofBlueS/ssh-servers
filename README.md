@@ -58,7 +58,7 @@ CLI - Con il solo supporto alla CLI
 
 --manual	Imposta manualmente l'indirizzo ip del server ssh
 
---ssh		  Avvia una connessione ssh manuale. Equivale ad utilizzare ssh-client manualmente.
+--ssh		 Avvia una connessione ssh manuale. Equivale ad utilizzare ssh-client manualmente.
 
 --default	Avvia la connessione di default definita nel file di configurazione per questo server
 
