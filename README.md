@@ -1,6 +1,6 @@
 # ssh-servers
 
-# Version:    2.0.3
+# Version:    2.1.0
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -22,10 +22,13 @@ sudo ln -s /opt/ssh-servers/ssh_servers.sh /usr/local/bin/ssh-servers
 
 ### CONFIGURAZIONE
 Questo script non può essere utilizzato così com'è, ma deve essere necessariamente richiamato da un altro [script/file di configurazione](https://github.com/KeyofBlueS/ssh-servers/blob/master/Esempio-configurazione-ssh-server.sh)
-che dovrà essere compilato in maniera precisa. L'esempio dello [script/file di configurazione](https://github.com/KeyofBlueS/ssh-servers/blob/master/Esempio-configurazione-ssh-server.sh)
-è commentato in modo esaustivo, basatevi su quello.
-Una volta compilato e salvato lo script di configurazione, deve essere reso eseguibile, quindi se ad esempio il nostro script di
-configurazione si chiama "mario-rossi-ssh-server.sh" e si trova nel percorso $HOME/ssh-servers/, dovremo dare il comando:
+che dovrà essere compilato in maniera precisa.
+Per avviare la configurazione guidata, su un terminale digitare:
+```sh
+$ ssh-servers --config
+```
+L'esempio dello [script/file di configurazione](https://github.com/KeyofBlueS/ssh-servers/blob/master/Esempio-configurazione-ssh-server.sh) è commentato in modo esaustivo, basatevi su quello.
+Una volta compilato e salvato lo script di configurazione, deve essere reso eseguibile, quindi se ad esempio il nostro script di configurazione si chiama "mario-rossi-ssh-server.sh" e si trova nel percorso $HOME/ssh-servers/, dovremo dare il comando:
 ```sh
 $ chmod +x "$HOME/ssh-servers/mario-rossi-ssh-server.sh"
 ```
@@ -56,6 +59,8 @@ CLI - Con il solo supporto alla CLI
 --manual      Imposta manualmente l'indirizzo ip del server ssh
 
 --default     Avvia la connessione di default definita nel file di configurazione per questo server
+
+--config      Avvia la configurazione guidata
 
 --help        Visualizza una descrizione ed opzioni di ssh-servers
 ```
