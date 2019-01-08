@@ -1456,7 +1456,7 @@ fi
 echo -e "\e[1;34m
 ### Il file di configurazione è stato correttamente salvato in "$SAVEFILE"
 
-- Puoi modificarlo manualmente con en editor di testo, ad esempio nano, digitando:
+- Puoi modificarlo manualmente con un editor di testo, ad esempio nano, digitando:
 
 \e[1;32m$ nano "$SAVEFILE"
 
