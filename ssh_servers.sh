@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version:    2.1.0
+# Version:    2.1.1
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -45,12 +45,47 @@ fi
 LOCALUSER=$USER
 LOCALMOUNTPOINT="/media/"$LOCALUSER"/"$SERVERHOSTNAME"_SSHFS"
 
-LANCOUNTSTEP=serverip_error_countdown_$LAN_COUNTDOWN
-INTERNETCOUNTSTEP=serverip_error_countdown_$INTERNET_COUNTDOWN
-
 READTIME="-t 1 -n 1"
 
 rm -f /tmp/$CURRENTIP_FILE.tmp
+
+if echo $SSHPORT | grep -Eoq '([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])'; then
+	echo -n
+else
+	SSHPORT=22
+fi
+
+if echo $SOCKSPORT | grep -Eoq '([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])'; then
+	echo -n
+else
+	SOCKSPORT=1080
+fi
+
+if echo $REMOTEMOUNTPOINT | grep -Eq '^(/[^/ ]*)+/?$'; then
+	echo -n
+else
+	REMOTEMOUNTPOINT=/
+fi
+
+if echo "$LAN_COUNTDOWN" | grep -Eq '^([0-9]|10|ask|exit)$'; then
+	echo -n
+else
+	LAN_COUNTDOWN=5
+fi
+LANCOUNTSTEP=serverip_error_countdown_$LAN_COUNTDOWN
+
+if echo "$INTERNET_COUNTDOWN" | grep -Eq '^([0-9]|10|ask|exit)$'; then
+	echo -n
+else
+	INTERNET_COUNTDOWN=10
+fi
+INTERNETCOUNTSTEP=serverip_error_countdown_$INTERNET_COUNTDOWN
+
+if echo $SERVERIP | grep -Eq '^(LAN|lan)$'; then
+	SERVERIP=$SERVERIP_LAN
+elif echo $SERVERIP | grep -Eq '^(INTERNET|internet)$'; then
+	SERVERIP=$SERVERIP_INTERNET
+fi
 
 if echo $AUDIO | grep -Eq '^(BEEP|beep)$'; then
 	BELL1=( "beep" )
@@ -70,10 +105,12 @@ else
 	BELL2="echo BEEP"
 fi
 
-if echo $SERVERIP | grep -Eq '^(LAN|lan)$'; then
-	SERVERIP=$SERVERIP_LAN
-elif echo $SERVERIP | grep -Eq '^(INTERNET|internet)$'; then
-	SERVERIP=$SERVERIP_INTERNET
+if echo "$GAIN" | grep -Eq '^[+]?[0-9]+$'; then
+	echo -n
+elif echo "$GAIN" | grep -Eq '^-[0-9]+$'; then
+	echo -n
+else
+	GAIN=-25
 fi
 
 serverip_default(){
@@ -397,9 +434,9 @@ echo -e "\e[1;34m
 $BELL1
 if echo $PING | grep -q "alive"; then
 	SERVERIP="$(fping -q -r0 -a $SERVERIP)"
-	echo
+	echo -n
 elif echo $PING | grep -q "$SSHPORT/tcp open"; then
-	echo
+	echo -n
 else
 	$SERVERIP_STEP
 fi
@@ -427,7 +464,7 @@ case $testo in
 	clear
 	echo $SOCKSPORT | grep -Eoq '([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])'
 	if [ $? = 0 ]; then
-		echo
+		echo -n
 	else
 		echo -e "\e[1;31mPorta SOCKS non corretta, imposto quella di default (1080)\e[0m"
 		SOCKSPORT=1080
@@ -1030,72 +1067,72 @@ do
 
 if echo $currentip_path_userinput | grep -q " "; then
 	if echo $currentip_path_userinput | grep -Eq '^".*"$'; then
-		echo
+		echo -n
 	else
 		currentip_path_userinput='"'$currentip_path_userinput'"'
 	fi
 else
-	echo
+	echo -n
 fi
 
 if echo $currentip_file_userinput | grep -q " "; then
 	if echo $currentip_file_userinput | grep -Eq '^".*"$'; then
-		echo
+		echo -n
 	else
 		currentip_file_userinput='"'$currentip_file_userinput'"'
 	fi
 else
-	echo
+	echo -n
 fi
 
 if echo $keyfile_userinput | grep -q " "; then
 	if echo $keyfile_userinput | grep -Eq '^".*"$'; then
-		echo
+		echo -n
 	else
 		keyfile_userinput='"'$keyfile_userinput'"'
 	fi
 else
-	echo
+	echo -n
 fi
 
 if echo $remotemountpoint_userinput | grep -q " "; then
 	if echo $remotemountpoint_userinput | grep -Eq '^".*"$'; then
-		echo
+		echo -n
 	else
 		remotemountpoint_userinput='"'$remotemountpoint_userinput'"'
 	fi
 else
-	echo
+	echo -n
 fi
 
 if echo $servermac_userinput | grep -q " "; then
 	if echo $servermac_userinput | grep -Eq '^".*"$'; then
-		echo
+		echo -n
 	else
 		servermac_userinput='"'$servermac_userinput'"'
 	fi
 else
-	echo
+	echo -n
 fi
 
 if echo $serverip_lan_userinput | grep -q " "; then
 	if echo $serverip_lan_userinput | grep -Eq '^".*"$'; then
-		echo
+		echo -n
 	else
 		serverip_lan_userinput='"'$serverip_lan_userinput'"'
 	fi
 else
-	echo
+	echo -n
 fi
 
 if echo $serverip_internet_userinput | grep -q " "; then
 	if echo $serverip_internet_userinput | grep -Eq '^".*"$'; then
-		echo
+		echo -n
 	else
 		serverip_internet_userinput='"'$serverip_internet_userinput'"'
 	fi
 else
-	echo
+	echo -n
 fi
 
 echo -e "\e[1;31m
@@ -1399,7 +1436,7 @@ givemehelp(){
 echo "
 # ssh-servers
 
-# Version:    2.1.0
+# Version:    2.1.1
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -1453,6 +1490,10 @@ Se i server ssh posseggono un indirizzo ip pubblico dinamico, consiglio fortemen
 utilizzare [current-ip](https://github.com/KeyofBlueS/current-ip) sul lato server.
 "
 exit 0
+}
+
+general_error(){
+ -e "\e[1;31m## ERRORE! Controlla il file di configurazione!\e[0m"
 }
 
 if [ "$1" = "--default" ]
