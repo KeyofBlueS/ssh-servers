@@ -28,7 +28,7 @@ export CURRENTIP_FILE=user@server_hostname_current.txt
 
 ############################## Impostazioni comuni per questo server ##############################
 # Percorso del file chiave, richiesto per il collegamento tramite key authtentication (opzionale)
-export KEYFILE=~/.ssh/keys/key-ecdsa
+export KEYFILE=$HOME/.ssh/keys/key-ecdsa
 # Porta in ascolto del server ssh (default 22)
 # Per reperire l'informazione direttamente dal file contenente le informazioni del server remoto, utilizzare la linea seguente:
 #export SSHPORT="$(cat "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep "export SSHPORT=" | grep -Eo '([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])')"
