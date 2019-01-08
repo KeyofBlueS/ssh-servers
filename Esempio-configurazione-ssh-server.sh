@@ -58,7 +58,7 @@ export SERVEMAC="AB:01:CD:23:EF:45 GH:67:IJ:89:KL:10"
 #export SERVERIP_LAN="$(cat $CURRENTIP_PATH/$CURRENTIP_FILE | grep SERVERIP_LAN_1 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
 export SERVERIP_LAN=000.000.000.000
 
-# Secondi di attesa prima di provare a ricontattare il server nella rete locale nel caso questo sia irraggiungibile
+# Secondi di attesa prima di provare a ricontattare il server nella rete locale nel caso questo fosse irraggiungibile
 # inserire un valore da 0 a 10, durante il countdown viene comunque chiesto all'utente come proseguire
 # oppure inserire exit per non riprovare automaticamente ed uscire dallo script
 # oppure inserire ask per non riprovare automaticamente, viene chiesto all'utente come proseguire
@@ -73,7 +73,7 @@ export LAN_COUNTDOWN=5
 #export SERVERIP_INTERNET="$(cat "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep SERVERIP_INTERNET_2 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
 export SERVERIP_INTERNET=000.000.000.000
 
-# Secondi di attesa prima di provare a ricontattare il server nella rete locale nel caso questo sia irraggiungibile
+# Secondi di attesa prima di provare a ricontattare il server nella rete locale nel caso questo fosse irraggiungibile
 # inserire un valore da 0 a 10, durante il countdown viene comunque chiesto all'utente come proseguire
 # oppure inserire exit per non riprovare automaticamente ed uscire dallo script
 # oppure inserire ask per non riprovare automaticamente, viene chiesto all'utente come proseguire
