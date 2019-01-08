@@ -1549,7 +1549,7 @@ GUI - Con supporto alla GUI sul Client
 CLI - Con il solo supporto alla CLI
 
 È possibile utilizzare le seguenti opzioni:
---local	Avvia una connessione ssh verso un server in ascolto all'interno della rete LAN
+--local		Avvia una connessione ssh verso un server in ascolto all'interno della rete LAN
 
 --remote	Avvia una connessione ssh verso un server in ascolto su internet
 
