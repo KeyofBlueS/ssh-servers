@@ -1,6 +1,6 @@
 # ssh-servers
 
-# Version:    2.1.1
+# Version:    2.1.2
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -52,17 +52,19 @@ CLI - Con il solo supporto alla CLI
 ```
 È possibile utilizzare le seguenti opzioni:
 ```
---local	      Avvia una connessione ssh verso un server in ascolto all'interno della rete LAN
+--local		Avvia una connessione ssh verso un server in ascolto all'interno della rete LAN
 
---remote      Avvia una connessione ssh verso un server in ascolto su internet
+--remote	Avvia una connessione ssh verso un server in ascolto su internet
 
---manual      Imposta manualmente l'indirizzo ip del server ssh
+--manual	Imposta manualmente l'indirizzo ip del server ssh
 
---default     Avvia la connessione di default definita nel file di configurazione per questo server
+--ssh		  Avvia una connessione ssh manuale. Equivale ad utilizzare ssh-client manualmente.
 
---config      Avvia la configurazione guidata
+--default	Avvia la connessione di default definita nel file di configurazione per questo server
 
---help        Visualizza una descrizione ed opzioni di ssh-servers
+--config	Avvia la configurazione guidata
+
+--help		Visualizza una descrizione ed opzioni di ssh-servers
 ```
 
 ### NOTA
