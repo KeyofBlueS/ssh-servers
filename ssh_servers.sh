@@ -5,6 +5,7 @@
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
 
+set +a
 #echo -n "Checking dependencies... "
 for name in fping fusermount nmap ssh sshfs wakeonlan
 do
