@@ -42,7 +42,7 @@ KEYFILE=$HOME/.ssh/keys/key-ecdsa
 # Porta in ascolto del server ssh (default: 22)
 SSHPORT=22
 # Per reperire l'informazione direttamente dal file contenente le informazioni del server remoto, utilizzare invece la linea seguente:
-#SSHPORT="$(cat "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep "export SSHPORT=" | grep -Eo '([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])')"
+#SSHPORT="$(cat "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep "SSHPORT=" | grep -Eo '([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])')"
 
 # Porta in cui verrà avviato un Server SOCKS per condividere la connessione del server sul client (default: 1080)
 SOCKSPORT=1080
@@ -50,7 +50,7 @@ SOCKSPORT=1080
 # Nome dell'utente presente sul server su cui ci si vuole loggare (non utilizzare "root")
 SERVERUSERNAME=server_username
 # Per reperire l'informazione direttamente dal file contenente le informazioni del server remoto, utilizzare invece la linea seguente:
-#SERVERUSERNAME="$(cat "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep "export SERVERUSERNAME=" | cut -c23-55)"
+#SERVERUSERNAME="$(cat "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep "SERVERUSERNAME=" | cut -c16-48)"
 
 # $HOSTNAME del server (meramente informativo per una più facile identificazione del server, ma necessario per il montaggio tramite SSHFS)
 SERVERHOSTNAME=server_hostname
