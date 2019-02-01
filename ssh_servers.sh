@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version:    2.1.2
+# Version:    2.2.0
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -37,10 +37,17 @@ done
 #SERVERIP=$SERVERIP_LAN
 #AUDIO=BEEP
 
-if [[ -e "$CURRENTIP_PATH/$CURRENTIP_FILE" ]]; then
-CURRENTIP="$CURRENTIP_PATH/$CURRENTIP_FILE"
+
+echo "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep -Eq '^/$'
+if [ $? != 0 ]; then
+	if [[ -e "$CURRENTIP_PATH/$CURRENTIP_FILE" ]]; then
+		CURRENTIP="$CURRENTIP_PATH/$CURRENTIP_FILE"
+	else
+		echo -e "\e[1;31mERRORE: "$CURRENTIP_PATH/$CURRENTIP_FILE" non trovato!\e[0m"
+		CURRENTIP="/dev/null"
+	fi
 else
-CURRENTIP="/dev/null"
+	CURRENTIP="/dev/null"
 fi
 
 LOCALUSER=$USER
@@ -50,13 +57,13 @@ READTIME="-t 1 -n 1"
 
 rm -f /tmp/$CURRENTIP_FILE.tmp
 
-if echo $SSHPORT | grep -Eoq '([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])'; then
+if echo $SSHPORT | grep -Eq '([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]$)'; then
 	echo -n
 else
 	SSHPORT=22
 fi
 
-if echo $SOCKSPORT | grep -Eoq '([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])'; then
+if echo $SOCKSPORT | grep -Eq '([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]$)'; then
 	echo -n
 else
 	SOCKSPORT=1080
@@ -141,7 +148,7 @@ echo -e "\e[1;34m
 ### Inserisci la porta in cui avviare un Server SOCKS per condividere la connessione del server sul client e premi invio
 Nel dubbio, lascia il campo vuoto e premi invio, verrà impostata la porta di default (1080)\e[0m"
 read SOCKSPORT
-if echo $SOCKSPORT | grep -Eoq '([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])'; then
+if echo $SOCKSPORT | grep -Eq '([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]$)'; then
 	echo -n
 else
 	echo 1080
@@ -169,7 +176,7 @@ do
 echo -e "\e[1;34m
 ### Inserisci l'indirizzo ip del server per la connessione ssh e premi invio\e[0m"
 read SERVERIP
-if echo $SERVERIP | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'; then
+if echo $SERVERIP | grep -E '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]$)'; then
 	break
 else
 	echo -e "\e[1;31m### Formato indirizzo IP non valido!...\e[0m"
@@ -190,13 +197,14 @@ ping_serverip
 }
 
 serverip_default(){
-if echo "$SERVERIP" | grep -x "$SERVERIP_LAN" | grep -Eoq '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'; then
+if echo "$SERVERIP" | grep -x "$SERVERIP_LAN" | grep -Eq '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]$)'; then
 	serverip_lan
-elif echo "$SERVERIP" | grep -x "$SERVERIP_INTERNET" | grep -Eoq '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)'; then
+elif echo "$SERVERIP" | grep -x "$SERVERIP_INTERNET" | grep -Eq '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]$)'; then
 	serverip_internet
 else
 	echo -e "\e[1;31mIndirizzo IP non valido!
 	\e[0m"
+	EXIT="NO"
 	givemehelp
 fi
 }
@@ -271,7 +279,7 @@ TYPE=LOCALE
 SERVERIP_START_STEP=serverip_lan
 COUNTDOWN=$LAN_COUNTDOWN
 RESET_COUNTDOWNSTEP=$LANCOUNTSTEP
-if [[ -e "$CURRENTIP_PATH/$CURRENTIP_FILE" ]]; then
+if cat "$CURRENTIP" | grep -q "SERVERIP_LAN_"; then
 SERVERIP_STEP=serverip_lan_1
 else
 SERVERIP_STEP=$LANCOUNTSTEP
@@ -287,7 +295,7 @@ ping_serverip
 }
 serverip_lan_1(){
 echo "Indirizzo IP locale memorizzato 1..."
-SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_LAN_1 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_LAN_1 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]$)')"
 PING="$(fping -r0 "$SERVERIP" | grep "alive")"
 SERVERIP_STEP=$LANCOUNTSTEP
 ping_serverip
@@ -298,7 +306,7 @@ TYPE=REMOTO
 SERVERIP_START_STEP=serverip_internet
 COUNTDOWN=$INTERNET_COUNTDOWN
 RESET_COUNTDOWNSTEP=$INTERNETCOUNTSTEP
-if [[ -e "$CURRENTIP_PATH/$CURRENTIP_FILE" ]]; then
+if cat "$CURRENTIP" | grep -q "SERVERIP_INTERNET_"; then
 SERVERIP_STEP=serverip_internet_1
 else
 SERVERIP_STEP=$INTERNETCOUNTSTEP
@@ -313,28 +321,28 @@ ping_serverip
 }
 serverip_internet_1(){
 echo "Indirizzo IP pubblico memorizzato 1..."
-SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_INTERNET_1 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_INTERNET_1 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]$)')"
 PING="$(nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open")"
 SERVERIP_STEP=serverip_internet_2
 ping_serverip
 }
 serverip_internet_2(){
 echo "Indirizzo IP pubblico memorizzato 2..."
-SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_INTERNET_2 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_INTERNET_2 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]$)')"
 PING="$(nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open")"
 SERVERIP_STEP=serverip_internet_3
 ping_serverip
 }
 serverip_internet_3(){
 echo "Indirizzo IP pubblico memorizzato 3..."
-SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_INTERNET_3 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_INTERNET_3 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]$)')"
 PING="$(nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open")"
 SERVERIP_STEP=serverip_internet_4
 ping_serverip
 }
 serverip_internet_4(){
 echo "Indirizzo IP pubblico memorizzato 4..."
-SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_INTERNET_4 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_INTERNET_4 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]$)')"
 PING="$(nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open")"
 SERVERIP_STEP=$INTERNETCOUNTSTEP
 ping_serverip
@@ -427,6 +435,9 @@ exit 0
 
 serverip_error(){
 clear
+echo $REACH1
+echo $REACH2
+echo $REACH3
 echo -e "\e[1;34m
 $SERVERUSERNAME@$SERVERHOSTNAME @ $SERVERIP ($TYPE) non raggiungibile,
 è\e[0m" "\e[1;31mOFFLINE o rete non disponibile\e[0m"
@@ -483,11 +494,14 @@ esac
 }
 
 serverip_update(){
+REACH1=""
+REACH2="$(echo -e "\e[1;34m## Controllo raggiungibilità IP del Server non eseguito.\e[0m")"
+REACH3=""
 echo -e "\e[1;34m
 Provo ad aggiornare gli indirizzi IP...\e[0m"
 rm -f /tmp/$CURRENTIP_FILE.tmp
 wget -q $CURRENTIP_LINK -O /tmp/$CURRENTIP_FILE.tmp
-cat "/tmp/$CURRENTIP_FILE.tmp" | grep -q "export SERVER"
+cat "/tmp/$CURRENTIP_FILE.tmp" | grep -q "SERVER"
 if [ $? = 0 ]; then
 	diff -q "$CURRENTIP" "/tmp/$CURRENTIP_FILE.tmp"
 	if [ $? = 0 ]; then
@@ -504,9 +518,7 @@ $SERVERIP_START_STEP
 }
 
 ping_serverip(){
-echo -e "\e[1;34m
-## PING $SERVERUSERNAME@$SERVERHOSTNAME  IP=$SERVERIP Port=$SSHPORT
-\e[0m"
+echo -e "\e[1;34m## PING $SERVERUSERNAME@$SERVERHOSTNAME  IP=$SERVERIP Port=$SSHPORT\e[0m"
 $BELL1
 if echo $PING | grep -q "alive"; then
 	SERVERIP="$(fping -q -r0 -a $SERVERIP)"
@@ -514,7 +526,40 @@ if echo $PING | grep -q "alive"; then
 elif echo $PING | grep -q "$SSHPORT/tcp open"; then
 	echo -n
 else
-	echo -e "\e[1;31m ## OFFLINE... \e[1;31mriprova...\e[0m"
+	echo -e "\e[1;31m ## OFFLINE...
+\e[0m"
+	if echo $TYPE | grep -q "REMOTO"; then
+		echo -e "\e[1;31mPremi INVIO per controllare la raggiungibilità dell'IP
+\e[0m"
+		if read -t 1 _e; then
+		echo controllo raggiungibilità di questo indirizzo IP...
+			if nmap -sn $SERVERIP | grep "1 host up"; then
+				REACH1="$(echo -e "\e[1;34m## IP del Server su internet ($SERVERIP) \e[1;32mraggiungibile!\e[0m")"
+				REACH2="$(echo -e "\e[1;34mIl server potrebbe essere spento, non connesso o porta ssh in ascolto chiusa.\e[0m")"
+				REACH3="echo -n"
+				sleep 1
+			else
+				REACH1="$(echo -e "\e[1;34m## IP del Server su internet ($SERVERIP) \e[1;31mnon raggiungibile!\e[0m")"
+				REACH2="$(echo -e "\e[1;34mIP cambiato/errato o rete non disponibile.\e[0m")"
+				REACH3="$(echo -e "\e[1;31mControlla la connessione o prova ad aggiornare gli indirizzi IP.\e[0m")"
+				sleep 1
+			fi
+			echo "proseguo a cercare di contattare il server...
+"
+		fi
+	elif echo $TYPE | grep -q "LOCALE"; then
+			REACH1="$(echo -e "\e[1;34m## IP del Server nella rete locale ($SERVERIP) \e[1;31mnon raggiungibile!\e[0m")"
+			REACH2="$(echo -e "\e[1;34mIl server potrebbe essere spento, non connesso, porta ssh in ascolto chiusa, IP cambiato/errato o rete non disponibile.\e[0m")"
+			REACH3="$(echo -e "\e[1;31mControlla la connessione o prova ad aggiornare gli indirizzi IP.\e[0m")"
+			sleep 1
+	fi
+	if echo $REACH2 | grep -q "o"; then
+		echo -n
+	else
+		REACH1=""
+		REACH2="$(echo -e "\e[1;34m## Controllo raggiungibilità IP del Server non eseguito.\e[0m")"
+		REACH3=""
+	fi
 	$SERVERIP_STEP
 fi
 echo -e "\e[1;34m$SERVERUSERNAME@$SERVERHOSTNAME @ $SERVERIP ($TYPE) è\e[0m" "\e[1;32mONLINE\e[0m"
@@ -1218,23 +1263,23 @@ Vuoi modificare qualcosa o procedere con il salvataggio?\e[1;34m
 
 Il contenuto del file di configurazione è:
 
-(1)  - export CURRENTIP_LINK=$currentip_link_userinput
-(2)  - export CURRENTIP_PATH=$currentip_path_userinput
-(3)  - export CURRENTIP_FILE=$currentip_file_userinput
-(4)  - export KEYFILE=$keyfile_userinput
-(5)  - export SSHPORT=$sshport_userinput
-(6)  - export SOCKSPORT=$socksport_userinput
-(7)  - export SERVERUSERNAME=$serverusername_userinput
-(8)  - export SERVERHOSTNAME=$serverhostname_userinput
-(9)  - export REMOTEMOUNTPOINT=$remotemountpoint_userinput
-(10) - export SERVEMAC=$servermac_userinput
-(11) - export SERVERIP_LAN=$serverip_lan_userinput
-(12) - export LAN_COUNTDOWN=$lan_countdown_userinput
-(13) - export SERVERIP_INTERNET=$serverip_internet_userinput
-(14) - export INTERNET_COUNTDOWN=$internet_countdown_userinput
-(15) - export SERVERIP=$serverip_userinput
-(16) - export AUDIO=$audio_userinput
-(17) - export GAIN=$gain_userinput
+(1)  - CURRENTIP_LINK=$currentip_link_userinput
+(2)  - CURRENTIP_PATH=$currentip_path_userinput
+(3)  - CURRENTIP_FILE=$currentip_file_userinput
+(4)  - KEYFILE=$keyfile_userinput
+(5)  - SSHPORT=$sshport_userinput
+(6)  - SOCKSPORT=$socksport_userinput
+(7)  - SERVERUSERNAME=$serverusername_userinput
+(8)  - SERVERHOSTNAME=$serverhostname_userinput
+(9)  - REMOTEMOUNTPOINT=$remotemountpoint_userinput
+(10) - SERVEMAC=$servermac_userinput
+(11) - SERVERIP_LAN=$serverip_lan_userinput
+(12) - LAN_COUNTDOWN=$lan_countdown_userinput
+(13) - SERVERIP_INTERNET=$serverip_internet_userinput
+(14) - INTERNET_COUNTDOWN=$internet_countdown_userinput
+(15) - SERVERIP=$serverip_userinput
+(16) - AUDIO=$audio_userinput
+(17) - GAIN=$gain_userinput
 (S)alva
 (R)icomincia
 (E)sci dal programma
@@ -1424,24 +1469,25 @@ SAVEFILE=""$configuration_path_userinput"/"$configuration_file_userinput".sh"
 
 cat <<EOT > $SAVEFILE
 #!/bin/bash
+set -a
 
-export CURRENTIP_LINK=$currentip_link_userinput
-export CURRENTIP_PATH=$currentip_path_userinput
-export CURRENTIP_FILE=$currentip_file_userinput
-export KEYFILE=$keyfile_userinput
-export SSHPORT=$sshport_userinput
-export SOCKSPORT=$socksport_userinput
-export SERVERUSERNAME=$serverusername_userinput
-export SERVERHOSTNAME=$serverhostname_userinput
-export REMOTEMOUNTPOINT=$remotemountpoint_userinput
-export SERVEMAC=$servermac_userinput
-export SERVERIP_LAN=$serverip_lan_userinput
-export LAN_COUNTDOWN=$lan_countdown_userinput
-export SERVERIP_INTERNET=$serverip_internet_userinput
-export INTERNET_COUNTDOWN=$internet_countdown_userinput
-export SERVERIP=$serverip_userinput
-export AUDIO=$audio_userinput
-export GAIN=$gain_userinput
+CURRENTIP_LINK=$currentip_link_userinput
+CURRENTIP_PATH=$currentip_path_userinput
+CURRENTIP_FILE=$currentip_file_userinput
+KEYFILE=$keyfile_userinput
+SSHPORT=$sshport_userinput
+SOCKSPORT=$socksport_userinput
+SERVERUSERNAME=$serverusername_userinput
+SERVERHOSTNAME=$serverhostname_userinput
+REMOTEMOUNTPOINT=$remotemountpoint_userinput
+SERVEMAC=$servermac_userinput
+SERVERIP_LAN=$serverip_lan_userinput
+LAN_COUNTDOWN=$lan_countdown_userinput
+SERVERIP_INTERNET=$serverip_internet_userinput
+INTERNET_COUNTDOWN=$internet_countdown_userinput
+SERVERIP=$serverip_userinput
+AUDIO=$audio_userinput
+GAIN=$gain_userinput
 
 ssh-servers $SSHSERVERS
 EOT
@@ -1457,7 +1503,7 @@ fi
 echo -e "\e[1;34m
 ### Il file di configurazione è stato correttamente salvato in "$SAVEFILE"
 
-- Puoi modificarlo manualmente con un editor di testo, ad esempio nano, digitando:
+- Puoi modificarlo manualmente con en editor di testo, ad esempio nano, digitando:
 
 \e[1;32m$ nano "$SAVEFILE"
 
@@ -1513,7 +1559,7 @@ givemehelp(){
 echo "
 # ssh-servers
 
-# Version:    2.1.2
+# Version:    2.2.0
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -1554,11 +1600,11 @@ CLI - Con il solo supporto alla CLI
 
 --remote	Avvia una connessione ssh verso un server in ascolto su internet
 
+--default	Avvia la connessione di default definita nel file di configurazione per questo server
+
 --manual	Imposta manualmente l'indirizzo ip del server ssh
 
---ssh		Avvia una connessione ssh manuale. Equivale ad utilizzare ssh-client manualmente.
-
---default	Avvia la connessione di default definita nel file di configurazione per questo server
+--ssh		Avvia una connessione ssh manuale. Equivale ad utilizzare ssh-client manualmente
 
 --config	Avvia la configurazione guidata
 
@@ -1568,7 +1614,18 @@ CLI - Con il solo supporto alla CLI
 Se i server ssh posseggono un indirizzo ip pubblico dinamico, consiglio fortemente (i due script si integrano a vicenda) di
 utilizzare [current-ip](https://github.com/KeyofBlueS/current-ip) sul lato server.
 "
-exit 0
+exitstep
+}
+
+exitstep(){
+if echo $EXIT | grep -xq "NO"; then
+	echo -e "\e[1;31mPremi INVIO per uscire\e[0m"
+	if read _e; then
+		exit 0
+	fi
+else
+	exit 0
+fi
 }
 
 if [ "$1" = "--default" ]
