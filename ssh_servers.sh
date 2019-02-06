@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version:    2.2.0
+# Version:    2.5.0
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -19,24 +19,23 @@ do
 done
 [[ $deps -ne 1 ]] && echo "" || { echo -en "\nSe preferisci, installa le dipendenze consigliate e riavvia questo script\n";}
 
+#CURRENTIP_LINK=URL/OF/CURRENTIP_FILE
+#CURRENTIP_PATH=$HOME
+#CURRENTIP_FILE=user@server_hostname_current.txt
 #KEYFILE=/PATH/TO/KEYFILE
 #SSHPORT=22
 #SOCKSPORT=1080
-#SERVERUSERNAME=user
-#SERVERHOSTNAME=HOST
+#SERVERUSERNAME=server_username
+#SERVERHOSTNAME=server_hostname
 #REMOTEMOUNTPOINT=/
-#SERVERMAC=
-#SERVERIP_LAN=0.0.0.0
-#LAN_COUNTDOWN=3
-#CURRENTIP_LINK=
-#CURRENTIP_PATH=
-#CURRENTIP_FILE=
-#SERVERIP_INTERNET=0.0.0.0
+#SERVEMAC="AB:01:CD:23:EF:45 GH:67:IJ:89:KL:10"
+#SERVERIP_LAN=000.000.000.000
+#LAN_COUNTDOWN=5
+#SERVERIP_INTERNET=000.000.000.000
 #INTERNET_COUNTDOWN=10
-#TYPE=LOCALE|REMOTO
-#SERVERIP=$SERVERIP_LAN
-#AUDIO=BEEP
-
+#SERVERIP=internet
+#AUDIO=beep
+#GAIN=-25
 
 echo "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep -Eq '^/$'
 if [ $? != 0 ]; then
@@ -81,6 +80,32 @@ else
 	LAN_COUNTDOWN=5
 fi
 LANCOUNTSTEP=serverip_error_countdown_$LAN_COUNTDOWN
+
+if echo "$REACHIP_STATIC" | grep -Eq '^(YES|yes|SI|si|NO|no)$'; then
+	echo -n
+else
+	REACHIP_STATIC="YES"
+fi
+if echo "$REACHIP_1" | grep -Eq '^(YES|yes|SI|si|NO|no)$'; then
+	echo -n
+else
+	REACHIP_1="YES"
+fi
+if echo "$REACHIP_2" | grep -Eq '^(YES|yes|SI|si|NO|no)$'; then
+	echo -n
+else
+	REACHIP_2="YES"
+fi
+if echo "$REACHIP_3" | grep -Eq '^(YES|yes|SI|si|NO|no)$'; then
+	echo -n
+else
+	REACHIP_3="YES"
+fi
+if echo "$REACHIP_4" | grep -Eq '^(YES|yes|SI|si|NO|no)$'; then
+	echo -n
+else
+	REACHIP_4="YES"
+fi
 
 if echo "$INTERNET_COUNTDOWN" | grep -Eq '^([0-9]|10|ask|exit)$'; then
 	echo -n
@@ -182,13 +207,18 @@ else
 	echo -e "\e[1;31m### Formato indirizzo IP non valido!...\e[0m"
 fi
 done
-if fping -r0 $SERVERIP | grep "alive"; then
-	PING="alive"
+PING="$(nmap -n --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep -o "$SSHPORT/tcp open")"
+while true
+do
+echo -e "\e[1;34m
+### Il server si trova su INTERNET o nella rete locale LAN?\e[0m"
+read TYPE
+if echo $TYPE | grep -Eq '^(INTERNET|internet|LAN|lan)$'; then
+	break
+else
+	echo -e "\e[1;31m### Rete inserita non valida!...\e[0m"
 fi
-if nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open"; then
-	PING="$SSHPORT/tcp open"
-fi
-
+done
 SERVERIP_START_STEP=menu
 SERVERIP_STEP=manual_ssh
 echo -e "\e[1;34m
@@ -212,27 +242,26 @@ fi
 menu0(){
 $BELL2
 echo -e "\e[1;34m
-## $SERVERUSERNAME@$SERVERHOSTNAME IP="$SERVERIP" Port=$SSHPORT\e[0m"
-echo -e "\e[1;31m
-Che tipo di collegamento vuoi effettuare?
-(L)ocale
-(R)emoto
+## $SERVERUSERNAME@$SERVERHOSTNAME IP="$SERVERIP" Port=$SSHPORT
+\e[1;31mChe tipo di collegamento vuoi effettuare?
+(L)an
+(I)nternet
 (E)sci dal programma
 \e[0m"
-read -p "Scelta (L/R/E): " testo
+read -p "Scelta (L/I/E): " testo
 
 case $testo in
     L|l)
 	{
 	echo -e "\e[1;34m
-## HAI SCELTO LOCALE\e[0m"
+## HAI SCELTO LAN\e[0m"
 	serverip_lan
 	}
     ;;
     R|r)
 	{
 	echo -e "\e[1;34m
-## HAI SCELTO REMOTO\e[0m"
+## HAI SCELTO INTERNET\e[0m"
 	serverip_internet
 	}
     ;;
@@ -252,8 +281,8 @@ esac
 serverip_manual(){
 $BELL1
 echo -e "\e[1;34m
-## $SERVERUSERNAME@$SERVERHOSTNAME\e[0m"
-echo -e "\e[1;31mInserisci manualmente l'indirizzo IP del server\e[0m"
+## $SERVERUSERNAME@$SERVERHOSTNAME
+\e[1;31mInserisci manualmente l'indirizzo IP del server\e[0m"
 unset ip; \
 while ! [ "$ip" ];do
     printf "IP: %s\r" $ip;
@@ -275,7 +304,7 @@ menu0
 }
 
 serverip_lan(){
-TYPE=LOCALE
+TYPE=LAN
 SERVERIP_START_STEP=serverip_lan
 COUNTDOWN=$LAN_COUNTDOWN
 RESET_COUNTDOWNSTEP=$LANCOUNTSTEP
@@ -287,22 +316,25 @@ fi
 serverip_lan_static
 }
 serverip_lan_static(){
-echo "Indirizzo IP locale statico o più affidabile..."
+NUM="più affidabile"
+echo "
+Indirizzo IP lan statico o $NUM..."
+REACHIPCHECK_AUTO="YES"
 SERVERIP="$SERVERIP_LAN"
-PING="$(fping -r0 $SERVERIP_LAN | grep "alive")"
-#SERVERIP_STEP=serverip_lan_1
+PING="$(nmap -n --host-timeout 3000ms -Pn -p T:"$SSHPORT" $SERVERIP)"
 ping_serverip
 }
 serverip_lan_1(){
-echo "Indirizzo IP locale memorizzato 1..."
-SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_LAN_1 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]$)')"
-PING="$(fping -r0 "$SERVERIP" | grep "alive")"
+NUM=1
+echo "
+Indirizzo IP lan memorizzato $NUM..."
+REACHIPCHECK_AUTO="YES"
 SERVERIP_STEP=$LANCOUNTSTEP
-ping_serverip
+serverip_internet_check
 }
 
 serverip_internet(){
-TYPE=REMOTO
+TYPE=INTERNET
 SERVERIP_START_STEP=serverip_internet
 COUNTDOWN=$INTERNET_COUNTDOWN
 RESET_COUNTDOWNSTEP=$INTERNETCOUNTSTEP
@@ -314,37 +346,50 @@ fi
 serverip_internet_static
 }
 serverip_internet_static(){
-echo "Indirizzo IP pubblico statico o più affidabile..."
+NUM="più affidabile"
+echo "
+Indirizzo IP pubblico statico o $NUM..."
+REACHIPCHECK_AUTO="$(echo $REACHIP_STATIC)"
 SERVERIP=$SERVERIP_INTERNET
-PING="$(nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open")"
+PING="$(nmap -n --host-timeout 3000ms -Pn -p T:"$SSHPORT" $SERVERIP | grep "$SSHPORT/tcp open")"
 ping_serverip
 }
 serverip_internet_1(){
-echo "Indirizzo IP pubblico memorizzato 1..."
-SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_INTERNET_1 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]$)')"
-PING="$(nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open")"
+NUM=1
+echo "
+Indirizzo IP pubblico memorizzato $NUM..."
+REACHIPCHECK_AUTO="$(echo $REACHIP_1)"
 SERVERIP_STEP=serverip_internet_2
-ping_serverip
+serverip_internet_check
 }
 serverip_internet_2(){
-echo "Indirizzo IP pubblico memorizzato 2..."
-SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_INTERNET_2 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]$)')"
-PING="$(nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open")"
+NUM=2
+echo "
+Indirizzo IP pubblico memorizzato $NUM..."
+REACHIPCHECK_AUTO="$(echo $REACHIP_2)"
 SERVERIP_STEP=serverip_internet_3
-ping_serverip
+serverip_internet_check
 }
 serverip_internet_3(){
-echo "Indirizzo IP pubblico memorizzato 3..."
-SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_INTERNET_3 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]$)')"
-PING="$(nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open")"
+NUM=3
+echo "
+Indirizzo IP pubblico memorizzato $NUM..."
+REACHIPCHECK_AUTO="$(echo $REACHIP_3)"
 SERVERIP_STEP=serverip_internet_4
-ping_serverip
+serverip_internet_check
 }
 serverip_internet_4(){
-echo "Indirizzo IP pubblico memorizzato 4..."
-SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_INTERNET_4 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]$)')"
-PING="$(nmap --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep "$SSHPORT/tcp open")"
+NUM=4
+echo "
+Indirizzo IP pubblico memorizzato $NUM..."
+REACHIPCHECK_AUTO="$(echo $REACHIP_4)"
 SERVERIP_STEP=$INTERNETCOUNTSTEP
+serverip_internet_check
+}
+
+serverip_internet_check(){
+SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_"$TYPE"_"$NUM" | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+PING="$(nmap -n --host-timeout 3000ms -Pn -p T:"$SSHPORT" $SERVERIP | grep "$SSHPORT/tcp open")"
 ping_serverip
 }
 
@@ -428,8 +473,8 @@ serverip_error
 serverip_error_countdown_exit(){
 echo -e "\e[1;34m
 $SERVERUSERNAME@$SERVERHOSTNAME @ $SERVERIP ($TYPE) non raggiungibile,
-è\e[0m" "\e[1;31mOFFLINE o rete non disponibile\e[0m"
-echo -e "\e[1;34mEsco dal programma\e[0m"
+è \e[1;31mOFFLINE o rete non disponibile
+\e[1;34mEsco dal programma\e[0m"
 exit 0
 }
 
@@ -520,39 +565,62 @@ $SERVERIP_START_STEP
 ping_serverip(){
 echo -e "\e[1;34m## PING $SERVERUSERNAME@$SERVERHOSTNAME  IP=$SERVERIP Port=$SSHPORT\e[0m"
 $BELL1
-if echo $PING | grep -q "alive"; then
-	SERVERIP="$(fping -q -r0 -a $SERVERIP)"
-	echo -n
-elif echo $PING | grep -q "$SSHPORT/tcp open"; then
-	echo -n
-else
-	echo -e "\e[1;31m ## OFFLINE...
-\e[0m"
-	if echo $TYPE | grep -q "REMOTO"; then
-		echo -e "\e[1;31mPremi INVIO per controllare la raggiungibilità dell'IP
-\e[0m"
-		if read -t 1 _e; then
-		echo controllo raggiungibilità di questo indirizzo IP...
-			if nmap -sn $SERVERIP | grep "1 host up"; then
-				REACH1="$(echo -e "\e[1;34m## IP del Server su internet ($SERVERIP) \e[1;32mraggiungibile!\e[0m")"
-				REACH2="$(echo -e "\e[1;34mIl server potrebbe essere spento, non connesso o porta ssh in ascolto chiusa.\e[0m")"
-				REACH3="echo -n"
-				sleep 1
-			else
-				REACH1="$(echo -e "\e[1;34m## IP del Server su internet ($SERVERIP) \e[1;31mnon raggiungibile!\e[0m")"
-				REACH2="$(echo -e "\e[1;34mIP cambiato/errato o rete non disponibile.\e[0m")"
-				REACH3="$(echo -e "\e[1;31mControlla la connessione o prova ad aggiornare gli indirizzi IP.\e[0m")"
-				sleep 1
-			fi
-			echo "proseguo a cercare di contattare il server...
-"
-		fi
-	elif echo $TYPE | grep -q "LOCALE"; then
-			REACH1="$(echo -e "\e[1;34m## IP del Server nella rete locale ($SERVERIP) \e[1;31mnon raggiungibile!\e[0m")"
-			REACH2="$(echo -e "\e[1;34mIl server potrebbe essere spento, non connesso, porta ssh in ascolto chiusa, IP cambiato/errato o rete non disponibile.\e[0m")"
-			REACH3="$(echo -e "\e[1;31mControlla la connessione o prova ad aggiornare gli indirizzi IP.\e[0m")"
-			sleep 1
+if echo $PING | grep -q "$SSHPORT/tcp open"; then
+	if echo $TYPE | grep -xq "LAN"; then
+		SERVERIP="$(fping -q -r0 -a $SERVERIP)"
+	elif echo $TYPE | grep -xq "INTERNET"; then
+		echo -n
 	fi
+else
+	echo -e "\e[1;31m ## OFFLINE...\e[0m"
+	sleep 2
+	if echo $REACHIPCHECK_AUTO | grep -xq "YES"; then
+		reachipcheck
+	else
+		echo -e "\e[1;31mPremi INVIO per controllare la raggiungibilità di questo IP\e[0m"
+		if read -t 1 _e; then
+			reachipcheck
+		fi
+	fi
+	$SERVERIP_STEP
+fi
+echo -e "\e[1;34m$SERVERUSERNAME@$SERVERHOSTNAME @ $SERVERIP ($TYPE) è\e[0m" "\e[1;32mONLINE\e[0m"
+menu
+}
+
+reachipcheck(){
+echo controllo raggiungibilità di questo indirizzo IP...
+if echo $TYPE | grep -q "LAN"; then
+	REACHIPCHECK="$(fping -r0 -a $SERVERIP)"
+	if echo $REACHIPCHECK | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]$)'; then
+		echo -e "\e[1;34m## IP del Server ($REACHIPCHECK) \e[1;32mraggiungibile!\e[0m"
+		REACH1="$(echo -e "\e[1;34m## IP del Server ($REACHIPCHECK) \e[1;32mraggiungibile!\e[0m")"
+		REACH2="$(echo -e "\e[1;34mLa porta ssh in ascolto del server potrebbe essere chiusa/errata.\e[0m")"
+		REACH3=""
+	else
+		echo -e "\e[1;34m## IP del Server ($SERVERIP) \e[1;31mnon raggiungibile!\e[0m"
+		REACH1="$(echo -e "\e[1;34m## IP del Server ($SERVERIP) \e[1;31mnon raggiungibile!\e[0m")"
+		REACH2="$(echo -e "\e[1;34mIl server potrebbe essere spento, IP cambiato/errato o rete non disponibile.\e[0m")"
+		REACH3="$(echo -e "\e[1;31mControlla la connessione o prova ad aggiornare gli indirizzi IP.\e[0m")"
+	fi
+elif echo $TYPE | grep -q "INTERNET"; then
+	REACHIPCHECK="$(nmap -n -sn -Pn $SERVERIP)"
+	if echo $REACHIPCHECK | grep -q "1 host up"; then
+		echo -e "\e[1;34m## IP del Server ($SERVERIP) \e[1;32mraggiungibile!\e[0m"
+		REACH1="$(echo -e "\e[1;34m## IP del Server ($SERVERIP) \e[1;32mraggiungibile!\e[0m")"
+		REACH2="$(echo -e "\e[1;34mIl server potrebbe essere spento, non connesso o porta ssh in ascolto chiusa/errata.\e[0m")"
+		REACH3=""
+	else
+		echo -e "\e[1;34m## IP del Server ($SERVERIP) \e[1;31mnon raggiungibile!\e[0m"
+		REACH1="$(echo -e "\e[1;34m## IP del Server ($SERVERIP) \e[1;31mnon raggiungibile!\e[0m")"
+		REACH2="$(echo -e "\e[1;34mIP cambiato/errato o rete non disponibile.\e[0m")"
+		REACH3="$(echo -e "\e[1;31mControlla la connessione o prova ad aggiornare gli indirizzi IP.\e[0m")"
+	fi
+else
+	echo -e "\e[1;31m## Server non raggiungibile!\e[0m"
+fi
+echo "proseguo a cercare di contattare il server...
+"
 	if echo $REACH2 | grep -q "o"; then
 		echo -n
 	else
@@ -561,9 +629,6 @@ else
 		REACH3=""
 	fi
 	$SERVERIP_STEP
-fi
-echo -e "\e[1;34m$SERVERUSERNAME@$SERVERHOSTNAME @ $SERVERIP ($TYPE) è\e[0m" "\e[1;32mONLINE\e[0m"
-menu
 }
 
 menu(){
@@ -662,7 +727,7 @@ configuration_currentip_link
 
 configuration_currentip_link(){
 echo -e "\e[1;34m
-### Inserisci l'URL del file contenente le informazioni del server remoto e premi invio
+### Inserisci l'URL del file contenente le informazioni del server su internet e premi invio
 (vedi https://github.com/KeyofBlueS/current-ip)
 Se il file non è disponibile o nel dubbio, lascia il campo vuoto e premi invio\e[0m"
 read currentip_link_userinput
@@ -677,7 +742,7 @@ fi
 
 configuration_currentip_path(){
 echo -e "\e[1;34m
-### Inserisci il percorso locale in cui è presente il file contenente le informazioni del server remoto e premi invio
+### Inserisci il percorso locale in cui è presente il file contenente le informazioni del server su internet e premi invio
 (vedi https://github.com/KeyofBlueS/current-ip)
 Se il file non è disponibile o nel dubbio, lascia il campo vuoto, premi invio e continua comunque\e[0m"
 read currentip_path_userinput
@@ -714,7 +779,7 @@ fi
 
 configuration_currentip_file(){
 echo -e "\e[1;34m
-### Inserisci il nome del file contenente le informazioni del server remoto e premi invio
+### Inserisci il nome del file contenente le informazioni del server su internet e premi invio
 (vedi https://github.com/KeyofBlueS/current-ip)
 Se il file non è disponibile o nel dubbio, lascia il campo vuoto e premi invio\e[0m"
 read currentip_file_userinput
@@ -951,7 +1016,7 @@ fi
 
 configuration_serverip_lan(){
 echo -e "\e[1;34m
-### Inserisci l'indirizzo ip del server per la connessione ssh in rete locale e premi invio\e[0m"
+### Inserisci l'indirizzo ip del server per la connessione ssh in rete lan e premi invio\e[0m"
 read serverip_lan_userinput
 echo -e "\e[1;34m-> \e[1;32m$serverip_lan_userinput\e[0m"
 if echo $serverip_lan_userinput | grep -Eq '^".*"$'; then
@@ -984,7 +1049,7 @@ fi
 
 configuration_lan_countdown(){
 echo -e "\e[1;34m
-### Secondi di attesa prima di provare a ricontattare il server nella rete locale nel caso questo fosse irraggiungibile, inserisci:
+### Secondi di attesa prima di provare a ricontattare il server nella rete lan nel caso questo fosse irraggiungibile, inserisci:
 un valore da 0 a 10	- durante il countdown viene comunque chiesto all'utente come proseguire
 ask	- per non riprovare automaticamente, viene chiesto all'utente come proseguire
 exit	- per non riprovare automaticamente ed uscire dallo script
@@ -1016,7 +1081,7 @@ fi
 
 configuration_serverip_internet(){
 echo -e "\e[1;34m
-### Inserisci l'indirizzo ip del server per la connessione ssh in remoto e premi invio\e[0m"
+### Inserisci l'indirizzo ip del server per la connessione ssh su internet e premi invio\e[0m"
 read serverip_internet_userinput
 echo -e "\e[1;34m-> \e[1;32m$serverip_internet_userinput\e[0m"
 if echo $serverip_internet_userinput | grep -Eq '^".*"$'; then
@@ -1559,7 +1624,7 @@ givemehelp(){
 echo "
 # ssh-servers
 
-# Version:    2.2.0
+# Version:    2.5.0
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
