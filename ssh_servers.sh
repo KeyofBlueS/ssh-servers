@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version:    2.5.0
+# Version:    2.5.2
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -316,13 +316,11 @@ fi
 serverip_lan_static
 }
 serverip_lan_static(){
-NUM="più affidabile"
+NUM=0
 echo "
-Indirizzo IP lan statico o $NUM..."
+Indirizzo IP lan statico o più affidabile..."
 REACHIPCHECK_AUTO="YES"
-SERVERIP="$SERVERIP_LAN"
-PING="$(nmap -n --host-timeout 3000ms -Pn -p T:"$SSHPORT" $SERVERIP)"
-ping_serverip
+serverip_internet_check
 }
 serverip_lan_1(){
 NUM=1
@@ -346,13 +344,11 @@ fi
 serverip_internet_static
 }
 serverip_internet_static(){
-NUM="più affidabile"
+NUM=0
 echo "
-Indirizzo IP pubblico statico o $NUM..."
+Indirizzo IP pubblico statico o più affidabile..."
 REACHIPCHECK_AUTO="$(echo $REACHIP_STATIC)"
-SERVERIP=$SERVERIP_INTERNET
-PING="$(nmap -n --host-timeout 3000ms -Pn -p T:"$SSHPORT" $SERVERIP | grep "$SSHPORT/tcp open")"
-ping_serverip
+serverip_internet_check
 }
 serverip_internet_1(){
 NUM=1
@@ -388,7 +384,15 @@ serverip_internet_check
 }
 
 serverip_internet_check(){
-SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_"$TYPE"_"$NUM" | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+if echo $NUM | grep -xq "0"; then
+	if echo $TYPE| grep -xq "LAN"; then
+		SERVERIP="$SERVERIP_LAN"
+	elif echo $TYPE| grep -xq "INTERNET"; then
+		SERVERIP=$SERVERIP_INTERNET
+	fi
+else
+	SERVERIP="$(cat "$CURRENTIP" | grep SERVERIP_"$TYPE"_"$NUM" | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+fi
 PING="$(nmap -n --host-timeout 3000ms -Pn -p T:"$SSHPORT" $SERVERIP | grep "$SSHPORT/tcp open")"
 ping_serverip
 }
@@ -480,11 +484,60 @@ exit 0
 
 serverip_error(){
 clear
-echo $REACH1
-echo $REACH2
-echo $REACH3
+if echo $REACHED0 | grep -xq ""; then
+	echo -n
+else
+	echo $REACHED0
+fi
+if echo $REACHED1 | grep -xq ""; then
+	echo -n
+else
+	echo $REACHED1
+fi
+if echo $REACHED2 | grep -xq ""; then
+	echo -n
+else
+	echo $REACHED2
+fi
+if echo $REACHED3 | grep -xq ""; then
+	echo -n
+else
+	echo $REACHED3
+fi
+
+if echo $REACHED4 | grep -xq ""; then
+	echo -n
+else
+	echo $REACHED4
+fi
+echo
+if echo $TYPE | grep -xq "LAN"; then
+	if echo $REACHED0 $REACHED1 $REACHED2 $REACHED3 $REACHED4 | grep -q "@@"; then
+		echo -e "\e[1;32mraggiungibile!
+\e[1;34mLa porta ssh in ascolto del server potrebbe essere chiusa/errata.
+\e[0m"
+	fi
+	if echo $REACHED0 $REACHED1 $REACHED2 $REACHED3 $REACHED4 | grep -q "##"; then
+		echo -e "\e[1;31mnon raggiungibile!
+\e[1;34mIl server potrebbe essere spento, IP cambiato/errato o rete non disponibile.
+\e[1;31mControlla la connessione o prova ad aggiornare gli indirizzi IP.\e[0m"
+	fi
+elif echo $TYPE | grep -xq "INTERNET"; then
+	if echo $REACHED0 $REACHED1 $REACHED2 $REACHED3 $REACHED4 | grep -q "@@"; then
+		echo -e "\e[1;32mraggiungibile!
+\e[1;34mIl server potrebbe essere spento, non connesso o porta ssh in ascolto chiusa/errata.
+\e[0m"
+	fi
+	if echo $REACHED0 $REACHED1 $REACHED2 $REACHED3 $REACHED4 | grep -q "##"; then
+		echo -e "\e[1;31mnon raggiungibile!
+\e[1;34mIP cambiato/errato o rete non disponibile.
+\e[1;31mControlla la connessione o prova ad aggiornare gli indirizzi IP.\e[0m"
+	fi
+else
+	echo -e "\e[1;31m## Server non raggiungibile!\e[0m"
+fi
 echo -e "\e[1;34m
-$SERVERUSERNAME@$SERVERHOSTNAME @ $SERVERIP ($TYPE) non raggiungibile,
+$SERVERUSERNAME@$SERVERHOSTNAME Port=$SSHPORT su $TYPE non raggiungibile,
 è\e[0m" "\e[1;31mOFFLINE o rete non disponibile\e[0m"
 #	echo -e "\e[1;31mProvo a risvegliare il device...\e[0m"
 #	wakeonlan -i "$SERVERIP" $SERVERMAC
@@ -573,7 +626,6 @@ if echo $PING | grep -q "$SSHPORT/tcp open"; then
 	fi
 else
 	echo -e "\e[1;31m ## OFFLINE...\e[0m"
-	sleep 2
 	if echo $REACHIPCHECK_AUTO | grep -xq "YES"; then
 		reachipcheck
 	else
@@ -590,31 +642,56 @@ menu
 
 reachipcheck(){
 echo controllo raggiungibilità di questo indirizzo IP...
-if echo $TYPE | grep -q "LAN"; then
+REACHED=""
+if echo $TYPE | grep -xq "LAN"; then
 	REACHIPCHECK="$(fping -r0 -a $SERVERIP)"
 	if echo $REACHIPCHECK | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]$)'; then
-		echo -e "\e[1;34m## IP del Server ($REACHIPCHECK) \e[1;32mraggiungibile!\e[0m"
-		REACH1="$(echo -e "\e[1;34m## IP del Server ($REACHIPCHECK) \e[1;32mraggiungibile!\e[0m")"
-		REACH2="$(echo -e "\e[1;34mLa porta ssh in ascolto del server potrebbe essere chiusa/errata.\e[0m")"
-		REACH3=""
+		echo -e "\e[1;34m@@ IP del Server ($REACHIPCHECK) \e[1;32mraggiungibile!\e[0m"
+		if echo $NUM | grep -xq "0"; then
+			REACHED0="$(echo -e "\e[1;34m@@ IP statico o più affidabile del Server ($REACHIPCHECK) \e[1;32mraggiungibile!\e[0m")"
+		elif echo $NUM | grep -xq "1"; then
+			REACHED1="$(echo -e "\e[1;34m@@ IP memorizzato $NUM del Server ($REACHIPCHECK) \e[1;32mraggiungibile!\e[0m")"
+		fi
+		REACHED=YES
 	else
 		echo -e "\e[1;34m## IP del Server ($SERVERIP) \e[1;31mnon raggiungibile!\e[0m"
-		REACH1="$(echo -e "\e[1;34m## IP del Server ($SERVERIP) \e[1;31mnon raggiungibile!\e[0m")"
-		REACH2="$(echo -e "\e[1;34mIl server potrebbe essere spento, IP cambiato/errato o rete non disponibile.\e[0m")"
-		REACH3="$(echo -e "\e[1;31mControlla la connessione o prova ad aggiornare gli indirizzi IP.\e[0m")"
+		if echo $NUM | grep -xq "0"; then
+			REACHED0="$(echo -e "\e[1;34m## IP statico o più affidabile del Server ($SERVERIP) \e[1;31mnon raggiungibile!\e[0m")"
+		elif echo $NUM | grep -xq "1"; then
+			REACHED1="$(echo -e "\e[1;34m## IP memorizzato $NUM del Server ($SERVERIP) \e[1;31mnon raggiungibile!\e[0m")"
+		fi
+		REACHED=NO
 	fi
-elif echo $TYPE | grep -q "INTERNET"; then
-	REACHIPCHECK="$(nmap -n -sn -Pn $SERVERIP)"
+elif echo $TYPE | grep -xq "INTERNET"; then
+	REACHIPCHECK="$(nmap -n -sn $SERVERIP)"
 	if echo $REACHIPCHECK | grep -q "1 host up"; then
-		echo -e "\e[1;34m## IP del Server ($SERVERIP) \e[1;32mraggiungibile!\e[0m"
-		REACH1="$(echo -e "\e[1;34m## IP del Server ($SERVERIP) \e[1;32mraggiungibile!\e[0m")"
-		REACH2="$(echo -e "\e[1;34mIl server potrebbe essere spento, non connesso o porta ssh in ascolto chiusa/errata.\e[0m")"
-		REACH3=""
+		echo -e "\e[1;34m@@ IP del Server ($SERVERIP) \e[1;32mraggiungibile!\e[0m"
+		if echo $NUM | grep -xq "0"; then
+			REACHED0="$(echo -e "\e[1;34m@@ IP statico o più affidabile del Server ($SERVERIP) \e[1;32mraggiungibile!\e[0m")"
+		elif echo $NUM | grep -xq "1"; then
+			REACHED1="$(echo -e "\e[1;34m@@ IP memorizzato $NUM del Server ($SERVERIP) \e[1;32mraggiungibile!\e[0m")"
+		elif echo $NUM | grep -xq "2"; then
+			REACHED2="$(echo -e "\e[1;34m@@ IP memorizzato $NUM del Server ($SERVERIP) \e[1;32mraggiungibile!\e[0m")"
+		elif echo $NUM | grep -xq "3"; then
+			REACHED3="$(echo -e "\e[1;34m@@ IP memorizzato $NUM del Server ($SERVERIP) \e[1;32mraggiungibile!\e[0m")"
+		elif echo $NUM | grep -xq "4"; then
+			REACHED4="$(echo -e "\e[1;34m@@ IP memorizzato $NUM del Server ($SERVERIP) \e[1;32mraggiungibile!\e[0m")"
+		fi
+		REACHED=YES
 	else
 		echo -e "\e[1;34m## IP del Server ($SERVERIP) \e[1;31mnon raggiungibile!\e[0m"
-		REACH1="$(echo -e "\e[1;34m## IP del Server ($SERVERIP) \e[1;31mnon raggiungibile!\e[0m")"
-		REACH2="$(echo -e "\e[1;34mIP cambiato/errato o rete non disponibile.\e[0m")"
-		REACH3="$(echo -e "\e[1;31mControlla la connessione o prova ad aggiornare gli indirizzi IP.\e[0m")"
+		if echo $NUM | grep -xq "0"; then
+			REACHED0="$(echo -e "\e[1;34m## pppIP statico o più affidabile del Server ($SERVERIP) \e[1;31mnon raggiungibile!\e[0m")"
+		elif echo $NUM | grep -xq "1"; then
+			REACHED1="$(echo -e "\e[1;34m## IP memorizzato $NUM del Server ($SERVERIP) \e[1;31mnon raggiungibile!\e[0m")"
+		elif echo $NUM | grep -xq "2"; then
+			REACHED2="$(echo -e "\e[1;34m## IP memorizzato $NUM del Server ($SERVERIP) \e[1;31mnon raggiungibile!\e[0m")"
+		elif echo $NUM | grep -xq "3"; then
+			REACHED3="$(echo -e "\e[1;34m## IP memorizzato $NUM del Server ($SERVERIP) \e[1;31mnon raggiungibile!\e[0m")"
+		elif echo $NUM | grep -xq "4"; then
+			REACHED4="$(echo -e "\e[1;34m## IP memorizzato $NUM del Server ($SERVERIP) \e[1;31mnon raggiungibile!\e[0m")"
+		fi
+		REACHED=NO
 	fi
 else
 	echo -e "\e[1;31m## Server non raggiungibile!\e[0m"
@@ -623,10 +700,6 @@ echo "proseguo a cercare di contattare il server...
 "
 	if echo $REACH2 | grep -q "o"; then
 		echo -n
-	else
-		REACH1=""
-		REACH2="$(echo -e "\e[1;34m## Controllo raggiungibilità IP del Server non eseguito.\e[0m")"
-		REACH3=""
 	fi
 	$SERVERIP_STEP
 }
@@ -1624,7 +1697,7 @@ givemehelp(){
 echo "
 # ssh-servers
 
-# Version:    2.5.0
+# Version:    2.5.2
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
