@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version:    2.5.2
+# Version:    2.5.3
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -36,6 +36,8 @@ done
 #SERVERIP=internet
 #AUDIO=beep
 #GAIN=-25
+
+printf "\033]2;$SERVERUSERNAME@$SERVERHOSTNAME\a"
 
 echo "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep -Eq '^/$'
 if [ $? != 0 ]; then
@@ -121,21 +123,39 @@ elif echo $SERVERIP | grep -Eq '^(INTERNET|internet)$'; then
 fi
 
 if echo $AUDIO | grep -Eq '^(BEEP|beep)$'; then
-	BELL1=( "beep" )
-	BELL2=( "beep -f 1000 -n -f 2000 -n -f 1500" )
-	BELL3=( "beep -f 2000" )
+	if which beep | grep -q "beep"; then
+		if lsmod | grep -q "pcspkr"; then
+			BELL1=( "beep" )
+			BELL2=( "beep -f 1000 -n -f 2000 -n -f 1500" )
+			BELL3=( "beep -f 2000" )
+		else
+			BELL0="echo -n"
+			BELL1="echo -n"
+			BELL2="echo -n"
+		fi
+	else
+		BELL0="echo -n"
+		BELL1="echo -n"
+		BELL2="echo -n"
+	fi
 elif echo $AUDIO | grep -Eq '^(SOX|sox)$'; then
-	BELL1=( "play -q -n synth 0.2 square 1000 gain $GAIN fade h 0.01" )
-	BELL2=( "play -q -n synth 0.2 square 1000 gain $GAIN : synth 0.2 square 2000 gain $GAIN fade h 0.01 : synth 0.2 square 1500 gain $GAIN fade h 0.01" )
-	BELL3=( "play -q -n synth 0.2 square 2000 gain $GAIN fade h 0.01" )
+	if which sox | grep -q "sox"; then
+		BELL1=( "play -qn -t alsa synth 0.2 square 1000 gain $GAIN fade h 0.01" )
+		BELL2=( "play -qn -t alsa synth 0.2 square 1000 gain $GAIN : synth 0.2 square 2000 gain $GAIN fade h 0.01 : synth 0.2 square 1500 gain $GAIN fade h 0.01" )
+		BELL3=( "play -qn -t alsa synth 0.2 square 2000 gain $GAIN fade h 0.01" )
+	else
+		BELL0="echo -n"
+		BELL1="echo -n"
+		BELL2="echo -n"
+	fi
 elif echo $AUDIO | grep -Eq '^(NULL|null)$'; then
-	BELL0="echo BEEP"
-	BELL1="echo BEEP"
-	BELL2="echo BEEP"
+	BELL0="echo -n"
+	BELL1="echo -n"
+	BELL2="echo -n"
 else
-	BELL0="echo BEEP"
-	BELL1="echo BEEP"
-	BELL2="echo BEEP"
+	BELL0="echo -n"
+	BELL1="echo -n"
+	BELL2="echo -n"
 fi
 
 if echo "$GAIN" | grep -Eq '^[+]?[0-9]+$'; then
@@ -154,12 +174,12 @@ $ ssh-servers --config
 
 
 ### ATTENZIONE: in questa fase, prima del collegamento, non viene controllata la validità delle informazioni inserite!
-Equivale ad utilizzare ssh-client manualmente.\e[1;34m
+Equivale ad utilizzare ssh-client manualmente.\e[1;35m
 
 ### Inserisci il percorso del file chiave, richiesto per il collegamento tramite key authtentication, e premi invio
 Se il file non è disponibile o nel dubbio, lascia il campo vuoto e premi invio\e[0m"
 read KEYFILE
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci la porta in ascolto del server ssh e premi invio
 Nel dubbio, lascia il campo vuoto e premi invio, verrà impostata la porta di default (22)\e[0m"
 read SSHPORT
@@ -169,7 +189,7 @@ else
 	echo 22
 	SSHPORT=22
 fi
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci la porta in cui avviare un Server SOCKS per condividere la connessione del server sul client e premi invio
 Nel dubbio, lascia il campo vuoto e premi invio, verrà impostata la porta di default (1080)\e[0m"
 read SOCKSPORT
@@ -179,14 +199,14 @@ else
 	echo 1080
 	SOCKSPORT=1080
 fi
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci il nome dell'utente presente sul server su cui ci si vuole loggare (non inserire "root") e premi invio\e[0m"
 read SERVERUSERNAME
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci il nome dell'host del server su cui ci si vuole loggare e premi invio
 Meramente informativo per una più facile identificazione del server, ma necessario per il montaggio tramite SSHFS\e[0m"
 read SERVERHOSTNAME
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci il punto di mount del server, la cartella radice da cui verrà montato localmente il server tramite SSHFS e premi invio
 Nel dubbio, lascia il campo vuoto e premi invio, verrà impostato il percorso di default (/)\e[0m"
 read REMOTEMOUNTPOINT
@@ -198,7 +218,7 @@ else
 fi
 while true
 do
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci l'indirizzo ip del server per la connessione ssh e premi invio\e[0m"
 read SERVERIP
 if echo $SERVERIP | grep -E '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]$)'; then
@@ -210,7 +230,7 @@ done
 PING="$(nmap -n --host-timeout 3000ms -p "$SSHPORT" "$SERVERIP" | grep -o "$SSHPORT/tcp open")"
 while true
 do
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Il server si trova su INTERNET o nella rete locale LAN?\e[0m"
 read TYPE
 if echo $TYPE | grep -Eq '^(INTERNET|internet|LAN|lan)$'; then
@@ -240,10 +260,10 @@ fi
 }
 
 menu0(){
-$BELL2
-echo -e "\e[1;34m
+$BELL2 &
+echo -e "\e[1;35m
 ## $SERVERUSERNAME@$SERVERHOSTNAME IP="$SERVERIP" Port=$SSHPORT
-\e[1;31mChe tipo di collegamento vuoi effettuare?
+\e[1;35mChe tipo di collegamento vuoi effettuare?
 (L)an
 (I)nternet
 (E)sci dal programma
@@ -279,10 +299,10 @@ esac
 }
 
 serverip_manual(){
-$BELL1
-echo -e "\e[1;34m
+$BELL1 &
+echo -e "\e[1;35m
 ## $SERVERUSERNAME@$SERVERHOSTNAME
-\e[1;31mInserisci manualmente l'indirizzo IP del server\e[0m"
+\e[1;35mInserisci manualmente l'indirizzo IP del server\e[0m"
 unset ip; \
 while ! [ "$ip" ];do
     printf "IP: %s\r" $ip;
@@ -400,67 +420,67 @@ ping_serverip
 serverip_error_countdown_10(){
 COUNTDOWN=10
 COUNTDOWNSTEP=serverip_error_countdown_9
-READTIMETEXT="o attendi $COUNTDOWN secondi "
+READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
 serverip_error
 }
 serverip_error_countdown_9(){
 COUNTDOWN=9
 COUNTDOWNSTEP=serverip_error_countdown_8
-READTIMETEXT="o attendi $COUNTDOWN secondi "
+READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
 serverip_error
 }
 serverip_error_countdown_8(){
 COUNTDOWN=8
 COUNTDOWNSTEP=serverip_error_countdown_7
-READTIMETEXT="o attendi $COUNTDOWN secondi "
+READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
 serverip_error
 }
 serverip_error_countdown_7(){
 COUNTDOWN=7
 COUNTDOWNSTEP=serverip_error_countdown_6
-READTIMETEXT="o attendi $COUNTDOWN secondi "
+READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
 serverip_error
 }
 serverip_error_countdown_6(){
 COUNTDOWN=6
 COUNTDOWNSTEP=serverip_error_countdown_5
-READTIMETEXT="o attendi $COUNTDOWN secondi "
+READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
 serverip_error
 }
 serverip_error_countdown_5(){
 COUNTDOWN=5
 COUNTDOWNSTEP=serverip_error_countdown_4
-READTIMETEXT="o attendi $COUNTDOWN secondi "
+READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
 serverip_error
 }
 serverip_error_countdown_4(){
 COUNTDOWN=4
 COUNTDOWNSTEP=serverip_error_countdown_3
-READTIMETEXT="o attendi $COUNTDOWN secondi "
+READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
 serverip_error
 }
 serverip_error_countdown_3(){
 COUNTDOWN=3
 COUNTDOWNSTEP=serverip_error_countdown_2
-READTIMETEXT="o attendi $COUNTDOWN secondi "
+READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
 serverip_error
 }
 serverip_error_countdown_2(){
 COUNTDOWN=2
 COUNTDOWNSTEP=serverip_error_countdown_1
-READTIMETEXT="o attendi $COUNTDOWN secondi "
+READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
 serverip_error
 }
 serverip_error_countdown_1(){
 COUNTDOWN=1
 COUNTDOWNSTEP=serverip_error_countdown_0
-READTIMETEXT="o attendi $COUNTDOWN secondi "
+READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
 serverip_error
 }
 serverip_error_countdown_0(){
 COUNTDOWN=0
 COUNTDOWNSTEP=serverip_error_countdown_end
-READTIMETEXT="o attendi $COUNTDOWN secondi "
+READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
 serverip_error
 }
 serverip_error_countdown_end(){
@@ -541,7 +561,7 @@ $SERVERUSERNAME@$SERVERHOSTNAME Port=$SSHPORT su $TYPE non raggiungibile,
 è\e[0m" "\e[1;31mOFFLINE o rete non disponibile\e[0m"
 #	echo -e "\e[1;31mProvo a risvegliare il device...\e[0m"
 #	wakeonlan -i "$SERVERIP" $SERVERMAC
-echo -e "\e[1;31mPremi:
+echo -e "\e[1;35mPremi:
 A per provare ad (a)ggiornare gli indirizzi IP
 M per inserire (m)anualmente l'indirizzo IP del server
 O per provare a collegarsi c(o)munque al server
@@ -617,7 +637,7 @@ $SERVERIP_START_STEP
 
 ping_serverip(){
 echo -e "\e[1;34m## PING $SERVERUSERNAME@$SERVERHOSTNAME  IP=$SERVERIP Port=$SSHPORT\e[0m"
-$BELL1
+$BELL1 &
 if echo $PING | grep -q "$SSHPORT/tcp open"; then
 	if echo $TYPE | grep -xq "LAN"; then
 		SERVERIP="$(fping -q -r0 -a $SERVERIP)"
@@ -706,8 +726,8 @@ echo "proseguo a cercare di contattare il server...
 
 menu(){
 PING=""
-$BELL2
-echo -e "\e[1;31m
+$BELL2 &
+echo -e "\e[1;35m
 Che tipo di collegamento vuoi effettuare?
 (S)ocks - Crea un socks server per condividere
 	  la connessione del server sul client
@@ -732,7 +752,7 @@ case $testo in
 	echo -e "\e[1;34m
 	## SSH $SERVERUSERNAME@$SERVERHOSTNAME SOCKS
 	\e[0m"
-	$BELL3
+	$BELL3 &
 	ssh -i "$KEYFILE" -ND $SOCKSPORT -p $SSHPORT $SERVERUSERNAME@$SERVERIP
 	$SERVERIP_START_STEP
 	}
@@ -743,7 +763,7 @@ case $testo in
 	echo -e "\e[1;34m
 ## SSH $SERVERUSERNAME@$SERVERHOSTNAME SSHFS
 \e[0m"
-	$BELL3
+	$BELL3 &
 	fusermount -u "$LOCALMOUNTPOINT"
 	sudo mkdir "$LOCALMOUNTPOINT"
 	sudo chown $LOCALUSER "$LOCALMOUNTPOINT"
@@ -758,7 +778,7 @@ case $testo in
 	echo -e "\e[1;34m
 ## SSH $SERVERUSERNAME@$SERVERHOSTNAME GUI
 \e[0m"
-	$BELL3
+	$BELL3 &
 	ssh -i "$KEYFILE" -X -p $SSHPORT $SERVERUSERNAME@$SERVERIP
 	$SERVERIP_START_STEP
 	}
@@ -769,7 +789,7 @@ case $testo in
 	echo -e "\e[1;34m
 ## SSH $SERVERUSERNAME@$SERVERHOSTNAME CLI
 \e[0m"
-	$BELL3
+	$BELL3 &
 	ssh -i "$KEYFILE" -p $SSHPORT $SERVERUSERNAME@$SERVERIP
 	$SERVERIP_START_STEP
 	}
@@ -799,7 +819,7 @@ configuration_currentip_link
 }
 
 configuration_currentip_link(){
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci l'URL del file contenente le informazioni del server su internet e premi invio
 (vedi https://github.com/KeyofBlueS/current-ip)
 Se il file non è disponibile o nel dubbio, lascia il campo vuoto e premi invio\e[0m"
@@ -814,7 +834,7 @@ fi
 }
 
 configuration_currentip_path(){
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci il percorso locale in cui è presente il file contenente le informazioni del server su internet e premi invio
 (vedi https://github.com/KeyofBlueS/current-ip)
 Se il file non è disponibile o nel dubbio, lascia il campo vuoto, premi invio e continua comunque\e[0m"
@@ -851,7 +871,7 @@ fi
 }
 
 configuration_currentip_file(){
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci il nome del file contenente le informazioni del server su internet e premi invio
 (vedi https://github.com/KeyofBlueS/current-ip)
 Se il file non è disponibile o nel dubbio, lascia il campo vuoto e premi invio\e[0m"
@@ -886,7 +906,7 @@ fi
 }
 
 configuration_keyfile(){
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci il percorso del file chiave, richiesto per il collegamento tramite key authtentication, e premi invio
 Se il file non è disponibile o nel dubbio, lascia il campo vuoto, premi invio e continua comunque\e[0m"
 read keyfile_userinput
@@ -920,7 +940,7 @@ fi
 }
 
 configuration_sshport(){
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci la porta in ascolto del server ssh e premi invio
 Nel dubbio, inserisci la porta di default (22) e premi invio\e[0m"
 read sshport_userinput
@@ -949,7 +969,7 @@ fi
 }
 
 configuration_socksport(){
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci la porta in cui avviare un Server SOCKS per condividere la connessione del server sul client e premi invio
 Nel dubbio, inserisci la porta di default (1080) e premi invio\e[0m"
 read socksport_userinput
@@ -978,7 +998,7 @@ fi
 }
 
 configuration_serverusername(){
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci il nome dell'utente presente sul server su cui ci si vuole loggare (non inserire "root") e premi invio\e[0m"
 read serverusername_userinput
 echo -e "\e[1;34m-> \e[1;32m$serverusername_userinput\e[0m"
@@ -1006,7 +1026,7 @@ fi
 }
  ##################################
 configuration_serverhostname(){
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci il nome dell'host del server su cui ci si vuole loggare e premi invio
 Meramente informativo per una più facile identificazione del server, ma necessario per il montaggio tramite SSHFS\e[0m"
 read serverhostname_userinput
@@ -1020,7 +1040,7 @@ fi
 }
 
 configuration_remotemountpoint(){
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci il punto di mount del server, la cartella radice da cui verrà montato localmente il server tramite SSHFS e premi invio
 Nel dubbio, inserisci il percorso root (/) e premi invio\e[0m"
 read remotemountpoint_userinput
@@ -1054,7 +1074,7 @@ fi
 }
  ##################################
 configuration_servermac(){
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci l'indirizzo MAC del server, richiesto per provare a risvegliare il server tramite Wake On LAN e premi invio
 Nel dubbio, lascia il campo vuoto, premi invio e continua comunque\e[0m"
 read servermac_userinput
@@ -1088,7 +1108,7 @@ fi
 }
 
 configuration_serverip_lan(){
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci l'indirizzo ip del server per la connessione ssh in rete lan e premi invio\e[0m"
 read serverip_lan_userinput
 echo -e "\e[1;34m-> \e[1;32m$serverip_lan_userinput\e[0m"
@@ -1121,7 +1141,7 @@ fi
 }
 
 configuration_lan_countdown(){
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Secondi di attesa prima di provare a ricontattare il server nella rete lan nel caso questo fosse irraggiungibile, inserisci:
 un valore da 0 a 10	- durante il countdown viene comunque chiesto all'utente come proseguire
 ask	- per non riprovare automaticamente, viene chiesto all'utente come proseguire
@@ -1153,7 +1173,7 @@ fi
 }
 
 configuration_serverip_internet(){
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci l'indirizzo ip del server per la connessione ssh su internet e premi invio\e[0m"
 read serverip_internet_userinput
 echo -e "\e[1;34m-> \e[1;32m$serverip_internet_userinput\e[0m"
@@ -1186,7 +1206,7 @@ fi
 }
 
 configuration_internet_countdown(){
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Secondi di attesa prima di provare a ricontattare il server su internet nel caso questo fosse irraggiungibile, inserisci:
 un valore da 0 a 10	- durante il countdown viene comunque chiesto all'utente come proseguire
 ask	- per non riprovare automaticamente, viene chiesto all'utente come proseguire
@@ -1218,7 +1238,7 @@ fi
 }
 
 configuration_serverip(){
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Imposta il tipo di collegamento preferito, inserisci:
 LAN	- se il server si trova all'interno della rete locale
 INTERNET	- se il server si trova su internet
@@ -1253,7 +1273,7 @@ fi
 }
 
 configuration_audio(){
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Imposta il tipo di segnale acustico da utilizzare, inserisci:
 BEEP	- per impostare il segnale acustico tramite lo speaker interno (richiede beep)
 SOX	- per impostare il segnale acustico tramite la scheda audio (richiede sox)
@@ -1291,7 +1311,7 @@ fi
 }
  ##################################
 configuration_gain(){
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Regola il volume delle segnalazioni acustiche per SOX e premi invio
 Inserisci qualsiasi valore negativo o positivo es -20, 0, 10, +20\e[0m"
 read gain_userinput
@@ -1395,7 +1415,7 @@ else
 	echo -n
 fi
 
-echo -e "\e[1;31m
+echo -e "\e[1;35m
 ### Configurazione terminata.
 Vuoi modificare qualcosa o procedere con il salvataggio?\e[1;34m
 
@@ -1539,7 +1559,7 @@ done
 
 configuration_configuration_path(){
 CHECK="no"
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci il percorso in cui verrà salvato questo file di configurazione e premi invio
 es. $HOME/ssh-servers\e[0m"
 read configuration_path_userinput
@@ -1574,7 +1594,7 @@ fi
 }
 
 configuration_configuration_file(){
-echo -e "\e[1;34m
+echo -e "\e[1;35m
 ### Inserisci il nome per questo file di configurazione e premi invio
 es. "$serverusername_userinput"-"$serverhostname_userinput"\e[0m"
 read configuration_file_userinput
@@ -1658,7 +1678,7 @@ userimput_error(){
 while true
 do
 	echo -e "\e[1;31m$ERRORTEXT\e[0m"
-echo -e "\e[1;31m(S)i
+echo -e "\e[1;35m(S)i
 (R)iprova
 (E)sci dal programma
 \e[0m"
@@ -1697,7 +1717,7 @@ givemehelp(){
 echo "
 # ssh-servers
 
-# Version:    2.5.2
+# Version:    2.5.3
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
