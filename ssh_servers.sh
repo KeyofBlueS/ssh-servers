@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version:    2.5.6
+# Version:    2.5.8
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -43,13 +43,34 @@ if curl -s github.com > /dev/null; then
 				scriptname="${scriptpath##*/}"
 			fi
 			if timeout -s SIGTERM 15 curl -s -o /tmp/"${scriptname}" "$SCRIPT_LINK"; then
-				sudo mv /tmp/flash_update.sh "${scriptfolder}"
-				sudo chown root:root "${scriptfolder}${scriptname}" > /dev/null 2>&1
-				sudo chmod 755 "${scriptfolder}${scriptname}" > /dev/null 2>&1
-				sudo chmod +x "${scriptfolder}${scriptname}" > /dev/null 2>&1
+				if [[ -w "${scriptfolder}${scriptname}" ]] && [[ -w "${scriptfolder}" ]]; then
+					mv /tmp/"${scriptname}" "${scriptfolder}"
+					chown root:root "${scriptfolder}${scriptname}" > /dev/null 2>&1
+					chmod 755 "${scriptfolder}${scriptname}" > /dev/null 2>&1
+					chmod +x "${scriptfolder}${scriptname}" > /dev/null 2>&1
+				elif which sudo > /dev/null 2>&1; then
+					echo -e "\e[1;33mPer proseguire con l'aggiornamento occorre concedere i permessi di amministratore\e[0m"
+					sudo mv /tmp/"${scriptname}" "${scriptfolder}"
+					sudo chown root:root "${scriptfolder}${scriptname}" > /dev/null 2>&1
+					sudo chmod 755 "${scriptfolder}${scriptname}" > /dev/null 2>&1
+					sudo chmod +x "${scriptfolder}${scriptname}" > /dev/null 2>&1
+				else
+					echo -e "\e[1;31m	Errore durante l'aggiornamento di questo script!
+Permesso negato!
+\e[0m"
+				fi
+			else
+				echo -e "\e[1;31m	Errore durante il download!
+\e[0m"
+			fi
+			LOCAL_VERSION="$(cat "${0}" | grep "# Version:" | head -n 1)"
+			if echo "$LOCAL_VERSION" | grep -q "$UPSTREAM_VERSION"; then
 				echo -e "\e[1;34m	Fatto!
 \e[0m"
 				exec "${scriptfolder}${scriptname}"
+			else
+				echo -e "\e[1;31m	Errore durante l'aggiornamento di questo script!
+\e[0m"
 			fi
 		fi
 	fi
@@ -1766,7 +1787,7 @@ givemehelp(){
 echo "
 # ssh-servers
 
-# Version:    2.5.6
+# Version:    2.5.8
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
