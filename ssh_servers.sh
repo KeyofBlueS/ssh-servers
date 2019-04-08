@@ -1,17 +1,25 @@
 #!/bin/bash
 
-# Version:    2.5.8
+# Version:    2.5.9
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
 
+# set to "true" to enable autoupdate of this script
+UPDATE=true
+
+if echo $UPDATE | grep -Eq '^(true|True|TRUE|si|NO|no)$'; then
+echo -e "\e[1;34mControllo aggiornamenti per questo script...\e[0m"
 if curl -s github.com > /dev/null; then
 	SCRIPT_LINK="https://raw.githubusercontent.com/KeyofBlueS/ssh-servers/master/ssh_servers.sh"
 	UPSTREAM_VERSION="$(timeout -s SIGTERM 15 curl -L "$SCRIPT_LINK" 2> /dev/null | grep "# Version:" | head -n 1)"
 	LOCAL_VERSION="$(cat "${0}" | grep "# Version:" | head -n 1)"
 	REPOSITORY_LINK="$(cat "${0}" | grep "# Repository:" | head -n 1)"
 	if echo "$LOCAL_VERSION" | grep -q "$UPSTREAM_VERSION"; then
-		echo -n
+		echo -e "\e[1;32m
+## Questo script risulta aggiornato alla versione upstream
+\e[0m
+"
 	else
 		echo -e "\e[1;33m-----------------------------------------------------------------------------------	
 ## ATTENZIONE: questo script non risulta aggiornato alla versione upstream, visita:
@@ -74,6 +82,7 @@ Permesso negato!
 			fi
 		fi
 	fi
+fi
 fi
 
 set +a
@@ -200,14 +209,14 @@ if echo $AUDIO | grep -Eq '^(BEEP|beep)$'; then
 			BELL2=( "beep -f 1000 -n -f 2000 -n -f 1500" )
 			BELL3=( "beep -f 2000" )
 		else
-			BELL0="echo -n"
 			BELL1="echo -n"
 			BELL2="echo -n"
+			BELL3="echo -n"
 		fi
 	else
-		BELL0="echo -n"
 		BELL1="echo -n"
 		BELL2="echo -n"
+		BELL3="echo -n"
 	fi
 elif echo $AUDIO | grep -Eq '^(SOX|sox)$'; then
 	if which sox | grep -q "sox"; then
@@ -220,13 +229,13 @@ elif echo $AUDIO | grep -Eq '^(SOX|sox)$'; then
 		BELL2="echo -n"
 	fi
 elif echo $AUDIO | grep -Eq '^(NULL|null)$'; then
-	BELL0="echo -n"
 	BELL1="echo -n"
 	BELL2="echo -n"
+	BELL3="echo -n"
 else
-	BELL0="echo -n"
 	BELL1="echo -n"
 	BELL2="echo -n"
+	BELL3="echo -n"
 fi
 
 if echo "$GAIN" | grep -Eq '^[+]?[0-9]+$'; then
@@ -331,6 +340,17 @@ fi
 }
 
 menu0(){
+if echo $AUDIO | grep -Eq '^(BEEP|beep)$'; then
+	if lsmod | grep -q "pcspkr"; then
+		BELL1=( "beep" )
+		BELL2=( "beep -f 1000 -n -f 2000 -n -f 1500" )
+		BELL3=( "beep -f 2000" )
+	else
+		BELL1="echo -n"
+		BELL2="echo -n"
+		BELL3="echo -n"
+	fi
+fi
 $BELL2 &
 echo -e "\e[1;35m
 ## $SERVERUSERNAME@$SERVERHOSTNAME IP="$SERVERIP" Port=$SSHPORT
@@ -370,6 +390,17 @@ esac
 }
 
 serverip_manual(){
+if echo $AUDIO | grep -Eq '^(BEEP|beep)$'; then
+	if lsmod | grep -q "pcspkr"; then
+		BELL1=( "beep" )
+		BELL2=( "beep -f 1000 -n -f 2000 -n -f 1500" )
+		BELL3=( "beep -f 2000" )
+	else
+		BELL1="echo -n"
+		BELL2="echo -n"
+		BELL3="echo -n"
+	fi
+fi
 $BELL1 &
 echo -e "\e[1;35m
 ## $SERVERUSERNAME@$SERVERHOSTNAME
@@ -706,6 +737,17 @@ $SERVERIP_START_STEP
 }
 
 ping_serverip(){
+if echo $AUDIO | grep -Eq '^(BEEP|beep)$'; then
+	if lsmod | grep -q "pcspkr"; then
+		BELL1=( "beep" )
+		BELL2=( "beep -f 1000 -n -f 2000 -n -f 1500" )
+		BELL3=( "beep -f 2000" )
+	else
+		BELL1="echo -n"
+		BELL2="echo -n"
+		BELL3="echo -n"
+	fi
+fi
 echo -e "\e[1;34m## PING $SERVERUSERNAME@$SERVERHOSTNAME  IP=$SERVERIP Port=$SSHPORT\e[0m"
 $BELL1 &
 if echo $PING | grep -q "$SSHPORT/tcp open"; then
@@ -754,6 +796,7 @@ if echo $TYPE | grep -xq "LAN"; then
 	fi
 elif echo $TYPE | grep -xq "INTERNET"; then
 	REACHIPCHECK="$(nmap -n -sn $SERVERIP)"
+#	REACHIPCHECK="$(nmap -n -Pn -p T:"4662" $SERVERIP)"
 	if echo $REACHIPCHECK | grep -q "1 host up"; then
 		echo -e "\e[1;34m@@ IP del Server ($SERVERIP) \e[1;32mraggiungibile!\e[0m"
 		if echo $NUM | grep -xq "0"; then
@@ -795,6 +838,17 @@ echo "proseguo a cercare di contattare il server...
 }
 
 menu(){
+if echo $AUDIO | grep -Eq '^(BEEP|beep)$'; then
+	if lsmod | grep -q "pcspkr"; then
+		BELL1=( "beep" )
+		BELL2=( "beep -f 1000 -n -f 2000 -n -f 1500" )
+		BELL3=( "beep -f 2000" )
+	else
+		BELL1="echo -n"
+		BELL2="echo -n"
+		BELL3="echo -n"
+	fi
+fi
 PING=""
 $BELL2 &
 echo -e "\e[1;35m
@@ -835,6 +889,7 @@ case $testo in
 \e[0m"
 	$BELL3 &
 	fusermount -u "$LOCALMOUNTPOINT"
+	echo -e "\e[1;33mPer proseguire con la creazione del mountpoint occorre concedere i permessi di amministratore\e[0m"
 	sudo mkdir "$LOCALMOUNTPOINT"
 	sudo chown $LOCALUSER "$LOCALMOUNTPOINT"
 	sshfs -d -o IdentityFile="$KEYFILE" -o allow_other -o reconnect -o ServerAliveInterval=15 $SERVERUSERNAME@$SERVERIP:"$REMOTEMOUNTPOINT" "$LOCALMOUNTPOINT" -p $SSHPORT -C
@@ -1787,7 +1842,7 @@ givemehelp(){
 echo "
 # ssh-servers
 
-# Version:    2.5.8
+# Version:    2.5.9
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
