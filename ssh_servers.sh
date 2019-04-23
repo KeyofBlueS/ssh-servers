@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Version:    2.5.9
+# Version:    2.5.10
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
 
 # set to "true" to enable autoupdate of this script
-UPDATE=true
+UPDATE=false
 
 if echo $UPDATE | grep -Eq '^(true|True|TRUE|si|NO|no)$'; then
 echo -e "\e[1;34mControllo aggiornamenti per questo script...\e[0m"
@@ -87,7 +87,7 @@ fi
 
 set +a
 #echo -n "Checking dependencies... "
-for name in fping fusermount nmap ssh sshfs wakeonlan
+for name in aplay fping fusermount nmap ssh sshfs wakeonlan
 do
   [[ $(which $name 2>/dev/null) ]] || { echo -en "\n$name è richiesto da questo script. Utilizza 'sudo apt-get install $name'";deps=1; }
 done
@@ -156,12 +156,18 @@ else
 	REMOTEMOUNTPOINT=/
 fi
 
-if echo "$LAN_COUNTDOWN" | grep -Eq '^([0-9]|10|ask|exit)$'; then
-	echo -n
+if echo "$LAN_COUNTDOWN" | grep -Eq '^(ask|ASK)$'; then
+	LANCOUNTSTEP=serverip_error_countdown_ask
+elif echo "$LAN_COUNTDOWN" | grep -Eq '^(exit|EXIT)$'; then
+	LANCOUNTSTEP=serverip_error_countdown_exit
+elif echo "$LAN_COUNTDOWN" | grep -Eq '[0-9]*'; then
+	LAN_COUNTDOWN="$(($LAN_COUNTDOWN+1))"
+	LANCOUNTSTEP=serverip_error_countdown_seconds
 else
-	LAN_COUNTDOWN=5
+	LAN_COUNTDOWN=6
+	LANCOUNTSTEP=serverip_error_countdown_seconds
 fi
-LANCOUNTSTEP=serverip_error_countdown_$LAN_COUNTDOWN
+RESET_COUNTDOWNSTEP_LAN=$LAN_COUNTDOWN
 
 if echo "$REACHIP_STATIC" | grep -Eq '^(YES|yes|SI|si|NO|no)$'; then
 	echo -n
@@ -189,12 +195,18 @@ else
 	REACHIP_4="YES"
 fi
 
-if echo "$INTERNET_COUNTDOWN" | grep -Eq '^([0-9]|10|ask|exit)$'; then
-	echo -n
+if echo "$INTERNET_COUNTDOWN" | grep -Eq '^(ask|ASK)$'; then
+	INTERNETCOUNTSTEP=serverip_error_countdown_ask
+elif echo "$INTERNET_COUNTDOWN" | grep -Eq '^(exit|EXIT)$'; then
+	INTERNETCOUNTSTEP=serverip_error_countdown_exit
+elif echo "$INTERNET_COUNTDOWN" | grep -Eq '[0-9]*'; then
+	INTERNET_COUNTDOWN="$(($INTERNET_COUNTDOWN+1))"
+	INTERNETCOUNTSTEP=serverip_error_countdown_seconds
 else
-	INTERNET_COUNTDOWN=10
+	INTERNET_COUNTDOWN=11
+	INTERNETCOUNTSTEP=serverip_error_countdown_seconds
 fi
-INTERNETCOUNTSTEP=serverip_error_countdown_$INTERNET_COUNTDOWN
+RESET_COUNTDOWNSTEP_INTERNET=$INTERNET_COUNTDOWN
 
 if echo $SERVERIP | grep -Eq '^(LAN|lan)$'; then
 	SERVERIP=$SERVERIP_LAN
@@ -429,7 +441,7 @@ serverip_lan(){
 TYPE=LAN
 SERVERIP_START_STEP=serverip_lan
 COUNTDOWN=$LAN_COUNTDOWN
-RESET_COUNTDOWNSTEP=$LANCOUNTSTEP
+RESET_COUNTDOWNSTEP=$RESET_COUNTDOWNSTEP_LAN
 if cat "$CURRENTIP" | grep -q "SERVERIP_LAN_"; then
 	SERVERIP_STEP=serverip_lan_1
 else
@@ -457,7 +469,7 @@ serverip_internet(){
 TYPE=INTERNET
 SERVERIP_START_STEP=serverip_internet
 COUNTDOWN=$INTERNET_COUNTDOWN
-RESET_COUNTDOWNSTEP=$INTERNETCOUNTSTEP
+RESET_COUNTDOWNSTEP=$RESET_COUNTDOWNSTEP_INTERNET
 if cat "$CURRENTIP" | grep -q "SERVERIP_INTERNET_"; then
 	SERVERIP_STEP=serverip_internet_1
 else
@@ -519,89 +531,29 @@ PING="$(nmap -n --host-timeout 3000ms -Pn -p T:"$SSHPORT" $SERVERIP | grep "$SSH
 ping_serverip
 }
 
-serverip_error_countdown_10(){
-COUNTDOWN=10
-COUNTDOWNSTEP=serverip_error_countdown_9
-READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
-serverip_error
-}
-serverip_error_countdown_9(){
-COUNTDOWN=9
-COUNTDOWNSTEP=serverip_error_countdown_8
-READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
-serverip_error
-}
-serverip_error_countdown_8(){
-COUNTDOWN=8
-COUNTDOWNSTEP=serverip_error_countdown_7
-READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
-serverip_error
-}
-serverip_error_countdown_7(){
-COUNTDOWN=7
-COUNTDOWNSTEP=serverip_error_countdown_6
-READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
-serverip_error
-}
-serverip_error_countdown_6(){
-COUNTDOWN=6
-COUNTDOWNSTEP=serverip_error_countdown_5
-READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
-serverip_error
-}
-serverip_error_countdown_5(){
-COUNTDOWN=5
-COUNTDOWNSTEP=serverip_error_countdown_4
-READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
-serverip_error
-}
-serverip_error_countdown_4(){
-COUNTDOWN=4
-COUNTDOWNSTEP=serverip_error_countdown_3
-READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
-serverip_error
-}
-serverip_error_countdown_3(){
-COUNTDOWN=3
-COUNTDOWNSTEP=serverip_error_countdown_2
-READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
-serverip_error
-}
-serverip_error_countdown_2(){
-COUNTDOWN=2
-COUNTDOWNSTEP=serverip_error_countdown_1
-READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
-serverip_error
-}
-serverip_error_countdown_1(){
-COUNTDOWN=1
-COUNTDOWNSTEP=serverip_error_countdown_0
-READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
-serverip_error
-}
-serverip_error_countdown_0(){
-COUNTDOWN=0
-COUNTDOWNSTEP=serverip_error_countdown_end
-READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
-serverip_error
-}
-serverip_error_countdown_end(){
-echo "Tempo scaduto"
-echo -e "\e[1;34m
-	Riprovo...
-\e[0m"
-$SERVERIP_START_STEP
-}
-serverip_error_countdown_ask(){
-READTIME="-n 2"
-serverip_error
-}
 serverip_error_countdown_exit(){
 echo -e "\e[1;34m
 $SERVERUSERNAME@$SERVERHOSTNAME @ $SERVERIP ($TYPE) non raggiungibile,
 è \e[1;31mOFFLINE o rete non disponibile
 \e[1;34mEsco dal programma\e[0m"
 exit 0
+}
+serverip_error_countdown_ask(){
+READTIME="-n 2"
+serverip_error
+}
+serverip_error_countdown_seconds(){
+COUNTDOWN="$(($COUNTDOWN-1))"
+COUNTDOWNSTEP=serverip_error_countdown_seconds
+if echo $COUNTDOWN | grep -Eqx "[-][1]"; then
+	echo "Tempo scaduto"
+	echo -e "\e[1;34m
+Riprovo...\e[0m"
+	$SERVERIP_START_STEP
+else
+	READTIMETEXT="o attendi \e[1;31m$COUNTDOWN\e[1;35m secondi "
+	serverip_error
+fi
 }
 
 serverip_error(){
@@ -708,7 +660,9 @@ case $testo in
     ;;
     *)
 	echo -e "\e[1;31m ## HAI SBAGLIATO TASTO.......cerca di stare un po' attento\e[0m" && sleep 2
-	$RESET_COUNTDOWNSTEP
+	COUNTDOWN=$RESET_COUNTDOWNSTEP
+	$SERVERIP_STEP
+	
     ;;
 esac
 }
@@ -858,6 +812,7 @@ Che tipo di collegamento vuoi effettuare?
 (M)onta localmente il server tramite SSHFS
 (G)UI - Con supporto alla GUI sul Client
 (C)LI - Con il solo supporto alla CLI
+(A)scolta l'audio tramite il microfono del server
 (E)sci dal programma
 \e[0m"
 read -p "Scelta (S/M/G/C/E): " testo
@@ -916,6 +871,18 @@ case $testo in
 \e[0m"
 	$BELL3 &
 	ssh -i "$KEYFILE" -p $SSHPORT $SERVERUSERNAME@$SERVERIP
+	$SERVERIP_START_STEP
+	}
+    ;;
+    A|a)
+	{
+	clear
+	echo -e "\e[1;34m
+## SSH $SERVERUSERNAME@$SERVERHOSTNAME MIC
+\e[0m"
+	$BELL3 &
+	ssh -i "$KEYFILE" -p $SSHPORT $SERVERUSERNAME@$SERVERIP "amixer set Capture cap; amixer set Capture 20%; cat /dev/null > ~/.bash_history && history -c && exit"
+	ssh -i "$KEYFILE" -p $SSHPORT $SERVERUSERNAME@$SERVERIP "arecord -f S16_LE -r 36000" | aplay
 	$SERVERIP_START_STEP
 	}
     ;;
@@ -1842,7 +1809,7 @@ givemehelp(){
 echo "
 # ssh-servers
 
-# Version:    2.5.9
+# Version:    2.5.10
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
