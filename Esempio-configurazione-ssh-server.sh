@@ -58,7 +58,7 @@ SERVERHOSTNAME=server_hostname
 # Punto di mount del server, la cartella radice da cui verrà montato localmente il server tramite SSHFS (default: /)
 REMOTEMOUNTPOINT=/
 
-# Indirizzo/indirizzi MAC (separati da uno spazio) del server, richiesto per provare a risvegliare il server tramite Wake On LAN (opzionale)
+# Indirizzo/indirizzi MAC (separati da uno spazio) del server, richiesto per provare a risvegliare il server tramite Wake On LAN (opzionale) - NON ANCORA IMPLEMENTATO
 SERVEMAC="AB:01:CD:23:EF:45 GH:67:IJ:89:KL:10"
 
 ############################## Impostazioni per il collegamento ssh in locale ##############################
