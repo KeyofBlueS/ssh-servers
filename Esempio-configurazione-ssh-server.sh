@@ -1,3 +1,4 @@
+#!/bin/bash
 set -a
 
 # Qualsiasi informazione che presenta uno spazio vuoto DEVE essere racchiusa tra doppie virgolette (") , es.
@@ -42,7 +43,7 @@ KEYFILE=$HOME/.ssh/keys/key-ecdsa
 # Porta in ascolto del server ssh (default: 22)
 SSHPORT=22
 # Per reperire l'informazione direttamente dal file contenente le informazioni del server remoto, utilizzare invece la linea seguente:
-#SSHPORT="$(cat "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep "SSHPORT=" | grep -Eo '([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])')"
+#SSHPORT=from-current-ip
 
 # Porta in cui verrà avviato un Server SOCKS per condividere la connessione del server sul client (default: 1080)
 SOCKSPORT=1080
@@ -50,15 +51,17 @@ SOCKSPORT=1080
 # Nome dell'utente presente sul server su cui ci si vuole loggare (non utilizzare "root")
 SERVERUSERNAME=server_username
 # Per reperire l'informazione direttamente dal file contenente le informazioni del server remoto, utilizzare invece la linea seguente:
-#SERVERUSERNAME="$(cat "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep "SERVERUSERNAME=" | cut -c16-48)"
+#SERVERUSERNAME=from-current-ip
 
 # $HOSTNAME del server (meramente informativo per una più facile identificazione del server, ma necessario per il montaggio tramite SSHFS)
 SERVERHOSTNAME=server_hostname
+# Per reperire l'informazione direttamente dal file contenente le informazioni del server remoto, utilizzare invece la linea seguente:
+#SERVERHOSTNAME=from-current-ip
 
 # Punto di mount del server, la cartella radice da cui verrà montato localmente il server tramite SSHFS (default: /)
 REMOTEMOUNTPOINT=/
 
-# Indirizzo/indirizzi MAC (separati da uno spazio) del server, richiesto per provare a risvegliare il server tramite Wake On LAN (opzionale) - NON ANCORA IMPLEMENTATO
+# Indirizzo/indirizzi MAC (separati da uno spazio) del server, richiesto per provare a risvegliare il server tramite Wake On LAN (opzionale - ANCORA NON IMPLEMENTATO)
 SERVEMAC="AB:01:CD:23:EF:45 GH:67:IJ:89:KL:10"
 
 ############################## Impostazioni per il collegamento ssh in locale ##############################
@@ -66,7 +69,7 @@ SERVEMAC="AB:01:CD:23:EF:45 GH:67:IJ:89:KL:10"
 # si consiglia comunque di impostare un indirizzo statico sul server
 SERVERIP_LAN=000.000.000.000
 # Per reperire l'informazione direttamente dal file contenente le informazioni del server remoto, utilizzare invece la linea seguente:
-#SERVERIP_LAN="$(cat $CURRENTIP_PATH/$CURRENTIP_FILE | grep SERVERIP_LAN_1 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+#SERVERIP_LAN=from-current-ip
 
 # Secondi di attesa prima di provare a ricontattare il server nella rete locale nel caso questo fosse irraggiungibile (default: 5)
 # inserire un valore in secondi, durante il countdown viene comunque chiesto all'utente come proseguire
@@ -80,8 +83,11 @@ LAN_COUNTDOWN=5
 # Indirizzo preferito (quello più affidabile) per la connessione in remoto o un IP pubblico statico
 SERVERIP_INTERNET=000.000.000.000
 # Per reperire l'informazione direttamente dal file contenente le informazioni del server remoto, utilizzare invece la linea seguente ed
-# imposta SERVERIP_INTERNET_1 2 3 o 4 (quello più affidabile):
-#SERVERIP_INTERNET="$(cat "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep SERVERIP_INTERNET_2 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+# imposta from-current-ip-1 2 3 o 4 (quello più affidabile):
+#SERVERIP_INTERNET=from-current-ip-1
+#SERVERIP_INTERNET=from-current-ip-2
+#SERVERIP_INTERNET=from-current-ip-3
+#SERVERIP_INTERNET=from-current-ip-4
 
 # Secondi di attesa prima di provare a ricontattare il server nella rete locale nel caso questo fosse irraggiungibile (default: 10)
 # inserire un valore in secondi, durante il countdown viene comunque chiesto all'utente come proseguire
