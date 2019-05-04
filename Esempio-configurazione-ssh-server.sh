@@ -1,4 +1,3 @@
-#!/bin/bash
 set -a
 
 # Qualsiasi informazione che presenta uno spazio vuoto DEVE essere racchiusa tra doppie virgolette (") , es.
