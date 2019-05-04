@@ -103,7 +103,7 @@ INTERNET_COUNTDOWN=10
 #SERVERIP=lan
 SERVERIP=internet
 
-############################# Impostazioni per il tipo segnale acustico #############################
+############################# Impostazioni per il tipo di segnale acustico #############################
 # Tipo di segnale acustico da utilizzare (beep, sox, null) (default: null)
 # beep  Imposta il segnale acustico tramite lo speaker interno (richiede beep)
 # sox   Imposta il segnale acustico tramite la scheda audio (richiede sox)
