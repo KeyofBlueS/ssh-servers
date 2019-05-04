@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version:    2.5.10
+# Version:    2.6.0
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -117,6 +117,24 @@ done
 #AUDIO=beep
 #GAIN=-25
 
+if echo $SERVERUSERNAME | grep -Eq '^(from-current-ip|FROM-CURRENT-IP)$'; then
+	SERVERUSERNAME="$(cat "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep "SERVERUSERNAME=" | cut -c16-48)"
+fi
+
+if echo $SERVERIP_LAN | grep -Eq '^(from-current-ip|FROM-CURRENT-IP)$'; then
+	SERVERIP_LAN="$(cat $CURRENTIP_PATH/$CURRENTIP_FILE | grep SERVERIP_LAN_1 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+fi
+
+if echo $SERVERIP_INTERNET | grep -Eq '^(from-current-ip-1|FROM-CURRENT-IP-1)$'; then
+	SERVERIP_INTERNET="$(cat "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep SERVERIP_INTERNET_1 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+elif echo $SERVERIP_INTERNET | grep -Eq '^(from-current-ip-2|FROM-CURRENT-IP-2)$'; then
+	SERVERIP_INTERNET="$(cat "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep SERVERIP_INTERNET_2 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+elif echo $SERVERIP_INTERNET | grep -Eq '^(from-current-ip-3|FROM-CURRENT-IP-3)$'; then
+	SERVERIP_INTERNET="$(cat "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep SERVERIP_INTERNET_3 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+elif echo $SERVERIP_INTERNET | grep -Eq '^(from-current-ip-4|FROM-CURRENT-IP-4)$'; then
+	SERVERIP_INTERNET="$(cat "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep SERVERIP_INTERNET_4 | grep -Eo '(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)')"
+fi
+
 printf "\033]2;$SERVERUSERNAME@$SERVERHOSTNAME\a"
 
 echo "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep -Eq '^/$'
@@ -140,6 +158,8 @@ rm -f /tmp/$CURRENTIP_FILE.tmp
 
 if echo $SSHPORT | grep -Eq '([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5]$)'; then
 	echo -n
+elif echo $SSHPORT | grep -Eq '^(from-current-ip|FROM-CURRENT-IP)$'; then
+	SSHPORT="$(cat "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep "SSHPORT=" | grep -Eo '([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])')"
 else
 	SSHPORT=22
 fi
@@ -148,6 +168,10 @@ if echo $SOCKSPORT | grep -Eq '([0-9]{1,4}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][
 	echo -n
 else
 	SOCKSPORT=1080
+fi
+
+if echo $SERVERHOSTNAME | grep -Eq '^(from-current-ip|FROM-CURRENT-IP)$'; then
+	SERVERHOSTNAME="$(cat "$CURRENTIP_PATH/$CURRENTIP_FILE" | grep "SERVERHOSTNAME=")"
 fi
 
 if echo $REMOTEMOUNTPOINT | grep -Eq '^(/[^/ ]*)+/?$'; then
@@ -1809,7 +1833,7 @@ givemehelp(){
 echo "
 # ssh-servers
 
-# Version:    2.5.10
+# Version:    2.6.0
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
