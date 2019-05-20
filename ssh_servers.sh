@@ -6,7 +6,7 @@
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
 
 # set to "true" to enable autoupdate of this script
-UPDATE=false
+UPDATE=true
 
 if echo $UPDATE | grep -Eq '^(true|True|TRUE|si|NO|no)$'; then
 echo -e "\e[1;34mControllo aggiornamenti per questo script...\e[0m"
