@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Version:    2.6.0
+# Version:    2.6.2
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
@@ -86,18 +86,52 @@ fi
 fi
 
 set +a
+
 #echo -n "Checking dependencies... "
 for name in aplay fping fusermount nmap ssh sshfs wakeonlan
 do
-  [[ $(which $name 2>/dev/null) ]] || { echo -en "\n$name è richiesto da questo script. Utilizza 'sudo apt-get install $name'";deps=1; }
+if which $name > /dev/null; then
+	echo -n
+else
+	if echo $name | grep -xq "aplay"; then
+		name="alsa-utils"
+	fi
+	if echo $name | grep -xq "fusermount"; then
+		name="fuse"
+	fi
+	if echo $name | grep -xq "ssh"; then
+		name="openssh-client"
+	fi
+	if [ -z "${missing}" ]; then
+		missing="$name"
+	else
+		missing="$missing $name"
+	fi
+fi
 done
-[[ $deps -ne 1 ]] && echo "" || { echo -en "\nInstalla le dipendenze necessarie e riavvia questo script\n";exit 1; }
+if ! [ -z "${missing}" ]; then
+	echo -e "\e[1;31mQuesto script dipende da \e[1;34m$missing\e[1;31m. Utilizza \e[1;34msudo apt-get install $missing
+\e[1;31mInstalla le dipendenze necessarie e riavvia questo script.\e[0m"
+	exit 1
+fi
 
+#echo -n "Checking recommended... "
 for name in beep sox
 do
-  [[ $(which $name 2>/dev/null) ]] || { echo -en "\n$name è consigliato da questo script per poter utilizzare le segnalazioni acustiche. Utilizza 'sudo apt-get install $name'";deps=1; }
+if which $name > /dev/null; then
+	echo -n
+else
+	if [ -z "${missing}" ]; then
+		missing="$name"
+	else
+		missing="$missing $name"
+	fi
+fi
 done
-[[ $deps -ne 1 ]] && echo "" || { echo -en "\nSe preferisci, installa le dipendenze consigliate e riavvia questo script\n";}
+if ! [ -z "${missing}" ]; then
+	echo -e "\e[1;31mQuesto script consiglia \e[1;34m$missing\e[1;31m per poter utilizzare le segnalazioni acustiche. Utilizza \e[1;34msudo apt-get install $missing
+\e[1;31mSe preferisci, installa le dipendenze consigliate e riavvia questo script.\e[0m"
+fi
 
 #CURRENTIP_LINK=URL/OF/CURRENTIP_FILE
 #CURRENTIP_PATH=$HOME
@@ -831,17 +865,30 @@ PING=""
 $BELL2 &
 echo -e "\e[1;35m
 Che tipo di collegamento vuoi effettuare?
+(R)ileva Sistema Operativo del server
 (S)ocks - Crea un socks server per condividere
 	  la connessione del server sul client
 (M)onta localmente il server tramite SSHFS
 (G)UI - Con supporto alla GUI sul Client
 (C)LI - Con il solo supporto alla CLI
-(A)scolta l'audio tramite il microfono del server
+(A)scolta l'audio tramite il microfono del server (Linux)
 (E)sci dal programma
 \e[0m"
-read -p "Scelta (S/M/G/C/E): " testo
+read -p "Scelta (R/S/M/G/C/E): " testo
 
 case $testo in
+    R|r)
+	{
+	clear
+	echo -e "\e[1;34m
+## SSH $SERVERUSERNAME@$SERVERHOSTNAME OS Detection
+\e[0m"
+	$BELL3 &
+	echo -e "\e[1;33mPer proseguire il rilevamento del Sistema Operativo occorre concedere i permessi di amministratore\e[0m"
+	sudo nmap -Pn -O -p $SSHPORT $SERVERIP
+	$SERVERIP_START_STEP
+	}
+    ;;
     S|s)
 	{
 	clear
@@ -1833,7 +1880,7 @@ givemehelp(){
 echo "
 # ssh-servers
 
-# Version:    2.6.0
+# Version:    2.6.2
 # Author:     KeyofBlueS
 # Repository: https://github.com/KeyofBlueS/ssh-servers
 # License:    GNU General Public License v3.0, https://opensource.org/licenses/GPL-3.0
